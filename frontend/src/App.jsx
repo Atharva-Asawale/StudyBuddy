@@ -11,7 +11,7 @@ import Progress from './pages/Progress';
 import SWOT from './pages/SWOT';
 import Syllabus from './pages/Syllabus';
 import Profile from './pages/Profile';
-
+import Quiz from './pages/Quiz';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated() ? children : <Navigate to="/" replace />;
@@ -75,7 +75,9 @@ function AppContent() {
         <Route path="/profile" element={
           <ProtectedRoute><Profile /></ProtectedRoute>
         } />
-
+        <Route path="/quiz/:topicId/:topicName" element={
+          <ProtectedRoute><Quiz /></ProtectedRoute>
+        } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 

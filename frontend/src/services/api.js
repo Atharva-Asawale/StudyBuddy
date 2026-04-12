@@ -5,7 +5,6 @@ const API = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach JWT token to every request automatically
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('studybuddy_token');
   if (token) {
@@ -30,4 +29,26 @@ export const semesterService = {
   update: (id, data) => API.put(`/api/semesters/${id}`, data),
   delete: (id) => API.delete(`/api/semesters/${id}`),
 };
+
+export const syllabusService = {
+  getTree: () => API.get('/api/syllabus'),
+  addCustomNode: (data) => API.post('/api/syllabus/custom', data),
+  editCustomNode: (id, data) => API.put(`/api/syllabus/custom/${id}`, data),
+  deleteCustomNode: (id) => API.delete(`/api/syllabus/custom/${id}`),
+};
+
+export const debtService = {
+  getDebt: () => API.get('/api/debt'),
+};
+
+export const quizService = {
+  generate: (topicId) => API.get(`/api/quiz/generate/${topicId}`),
+  submit: (data) => API.post('/api/quiz/submit', data),
+};
+
+export const studentService = {
+  getDashboard: () => API.get('/api/student/dashboard'),
+  getSwot: () => API.get('/api/student/swot'),
+};
+
 export default API;

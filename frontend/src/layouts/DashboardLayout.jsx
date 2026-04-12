@@ -10,7 +10,8 @@ export default function DashboardLayout({ children }) {
       <main style={{
         flex: 1,
         overflowY: 'auto',
-        padding: '2rem',
+        padding: '2rem 2.5rem',
+        width: '100%',
       }}>
         {children}
       </main>

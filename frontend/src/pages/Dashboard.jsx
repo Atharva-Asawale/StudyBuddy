@@ -1,34 +1,12 @@
 import DashboardLayout from '../layouts/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
+import { debtService, studentService } from '../services/api';
 import {
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer
 } from 'recharts';
-
-const progressData = [
-  { week: 'W1', score: 62 },
-  { week: 'W2', score: 68 },
-  { week: 'W3', score: 65 },
-  { week: 'W4', score: 74 },
-  { week: 'W5', score: 79 },
-  { week: 'W6', score: 83 },
-];
-
-const subjectData = [
-  { subject: 'DSA',  score: 78 },
-  { subject: 'OS',   score: 65 },
-  { subject: 'DBMS', score: 54 },
-  { subject: 'CN',   score: 82 },
-  { subject: 'SE',   score: 70 },
-];
-
-const activityFeed = [
-  { time: '2h ago',  text: 'Completed Data Structures quiz — 78%' },
-  { time: '5h ago',  text: 'Studied Operating Systems for 1.5 hrs' },
-  { time: '1d ago',  text: 'Learning debt flagged in DBMS Chapter 3' },
-  { time: '2d ago',  text: 'AI Mentor suggested reviewing Binary Trees' },
-];
 
 const glass = {
   background: 'rgba(15, 15, 40, 0.6)',
@@ -39,7 +17,91 @@ const glass = {
 };
 
 export default function Dashboard() {
-  const { currentUser } = useAuth();
+  const {
+    currentUser,
+    cachedDashboardData,
+    cachedDebtData,
+    cacheDashboardData,
+    cacheDebtData,
+  } = useAuth();
+  const [loading, setLoading] = useState(!cachedDashboardData || !cachedDebtData);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (cachedDashboardData && cachedDebtData) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const [dashboardRes, debtRes] = await Promise.all([
+          studentService.getDashboard(),
+          debtService.getDebt(),
+        ]);
+        cacheDashboardData(dashboardRes.data);
+        cacheDebtData(debtRes.data);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data', err);
+        cacheDashboardData({
+          totalQuizzes: 0,
+          averageScore: 0,
+          highestScore: 0,
+          recentQuizzes: [],
+          performanceTrend: [],
+          topicPerformance: [],
+        });
+        cacheDebtData({ totalDebt: 0, weakTopics: [] });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [cachedDashboardData, cachedDebtData]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const [dashboardRes, debtRes] = await Promise.all([
+        studentService.getDashboard(),
+        debtService.getDebt(),
+      ]);
+      cacheDashboardData(dashboardRes.data);
+      cacheDebtData(debtRes.data);
+    } catch (err) {
+      console.error('Failed to refresh dashboard data', err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const dashboardData = cachedDashboardData || {
+    totalQuizzes: 0,
+    averageScore: 0,
+    highestScore: 0,
+    recentQuizzes: [],
+    performanceTrend: [],
+    topicPerformance: [],
+  };
+
+  const debtData = cachedDebtData || { totalDebt: 0, weakTopics: [] };
+
+  const metrics = [
+    { label: 'Total Quizzes', value: dashboardData.totalQuizzes ?? 0, color: '#818cf8' },
+    { label: 'Average Score', value: `${Math.round(dashboardData.averageScore ?? 0)}%`, color: '#6ee7b7' },
+    { label: 'Highest Score', value: `${Math.round(dashboardData.highestScore ?? 0)}%`, color: '#93c5fd' },
+    { label: 'Recent Attempts', value: dashboardData.recentQuizzes?.length ?? 0, color: '#fde68a' },
+  ];
+
+  const formatDate = (value) => {
+    if (!value) return '';
+    return new Date(value).toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -50,151 +112,250 @@ export default function Dashboard() {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        gap: '1rem',
+        flexWrap: 'wrap',
         marginBottom: '1.5rem',
         background: 'rgba(129,140,248,0.08)',
         borderColor: 'rgba(129,140,248,0.2)',
       }}>
         <div>
-          <h1 style={{
-            fontSize: '1.6rem', fontWeight: 700,
-            marginBottom: '0.25rem',
-          }}>
-            Welcome back, {currentUser?.name?.split(' ')[0] || 'Student'} 👋
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+            Welcome back, {currentUser?.name?.split(' ')[0] || 'Student'}
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
-            {currentUser?.branch} · Semester {currentUser?.currentSemester}
+            {currentUser?.branch} | Semester {currentUser?.currentSemester}
           </p>
         </div>
 
-        {/* Learning Debt Score */}
-        <div style={{
-          textAlign: 'right',
-          background: 'rgba(0,0,0,0.2)',
-          padding: '1rem 1.5rem',
-          borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={loading || refreshing}
+            style={{
+              padding: '0.75rem 1rem',
+              borderRadius: '10px',
+              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(255,255,255,0.06)',
+              color: 'white',
+              fontWeight: 600,
+              cursor: loading || refreshing ? 'not-allowed' : 'pointer',
+              opacity: loading || refreshing ? 0.6 : 1,
+            }}
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh Dashboard'}
+          </button>
+
           <div style={{
-            fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)',
-            letterSpacing: '0.1em', textTransform: 'uppercase',
-            marginBottom: '0.25rem',
+            textAlign: 'right',
+            background: 'rgba(0,0,0,0.2)',
+            padding: '1rem 1.5rem',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.06)',
           }}>
-            Learning Debt
-          </div>
-          <div style={{
-            fontSize: '2.5rem', fontWeight: 700,
-            color: '#6ee7b7', lineHeight: 1.1,
-          }}>
-            24%
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#6ee7b7', opacity: 0.7 }}>
-            ↓ 3% this week
+            <div style={{
+              fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)',
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              marginBottom: '0.25rem',
+            }}>
+              Learning Debt
+            </div>
+            <div style={{ fontSize: '2.2rem', fontWeight: 700, color: '#6ee7b7', lineHeight: 1 }}>
+              {loading ? '--' : `${Math.round(debtData.totalDebt || 0)}`}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.25rem' }}>
+              {loading ? '' : `${debtData.weakTopics?.length || 0} weak topics`}
+            </div>
           </div>
         </div>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem',
+      }}>
+        {metrics.map((metric) => (
+          <div key={metric.label} style={glass}>
+            <div style={{
+              fontSize: '0.75rem',
+              color: 'rgba(255,255,255,0.38)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: '0.75rem',
+            }}>
+              {metric.label}
+            </div>
+            <div style={{
+              fontSize: '2rem',
+              fontWeight: 700,
+              color: metric.color,
+              lineHeight: 1,
+            }}>
+              {loading ? '--' : metric.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Weak Topics */}
+      <div style={{ ...glass, marginBottom: '1.5rem' }}>
+        <h3 style={{
+          fontSize: '0.8rem', fontWeight: 600,
+          color: 'rgba(255,255,255,0.4)',
+          textTransform: 'uppercase', letterSpacing: '0.08em',
+          marginBottom: '1rem',
+        }}>
+          Weak Topics
+        </h3>
+
+        {loading ? (
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.88rem' }}>
+            Analyzing your topics...
+          </p>
+        ) : debtData.weakTopics?.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {debtData.weakTopics.map((topic, i) => (
+              <span key={i} style={{
+                padding: '0.4rem 0.85rem',
+                background: 'rgba(252,165,165,0.15)',
+                border: '1px solid rgba(252,165,165,0.3)',
+                borderRadius: '999px',
+                color: '#fca5a5', fontSize: '0.82rem',
+              }}>
+                {topic}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: '#6ee7b7', fontSize: '0.88rem' }}>
+            No major weaknesses detected yet. Complete some quizzes to track progress.
+          </p>
+        )}
       </div>
 
       {/* Charts Row */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '1.25rem',
-        marginBottom: '1.5rem',
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '1.25rem', marginBottom: '1.5rem',
       }}>
-        {/* Line Chart */}
         <div style={glass}>
           <h3 style={{
             fontSize: '0.8rem', fontWeight: 600,
             color: 'rgba(255,255,255,0.4)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
+            textTransform: 'uppercase', letterSpacing: '0.08em',
             marginBottom: '1rem',
-          }}>
-            Learning Progress
-          </h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={progressData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="week" stroke="#888" fontSize={12} />
-              <YAxis stroke="#888" fontSize={12} domain={[50, 100]} />
-              <Tooltip
-                contentStyle={{
+          }}>Performance Trend</h3>
+          {loading ? (
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>
+              Loading your performance trend...
+            </p>
+          ) : dashboardData.performanceTrend?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={dashboardData.performanceTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="label" stroke="#888" fontSize={12} />
+                <YAxis stroke="#888" fontSize={12} domain={[0, 100]} />
+                <Tooltip contentStyle={{
                   background: '#1a1a2e',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '8px',
-                }}
-              />
-              <Line
-                type="monotone" dataKey="score"
-                stroke="#6ee7b7" strokeWidth={2}
-                dot={{ fill: '#6ee7b7', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+                }} />
+                <Line
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#6ee7b7"
+                  strokeWidth={2}
+                  dot={{ fill: '#6ee7b7', r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>
+              No quiz history yet. Attempt a quiz to start tracking your trend.
+            </p>
+          )}
         </div>
 
-        {/* Bar Chart */}
         <div style={glass}>
           <h3 style={{
             fontSize: '0.8rem', fontWeight: 600,
             color: 'rgba(255,255,255,0.4)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
+            textTransform: 'uppercase', letterSpacing: '0.08em',
             marginBottom: '1rem',
-          }}>
-            Subject Performance
-          </h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={subjectData} barSize={28}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="subject" stroke="#888" fontSize={12} />
-              <YAxis stroke="#888" fontSize={12} domain={[0, 100]} />
-              <Tooltip
-                contentStyle={{
+          }}>Top Topic Scores</h3>
+          {loading ? (
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>
+              Loading your topic performance...
+            </p>
+          ) : dashboardData.topicPerformance?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={dashboardData.topicPerformance} barSize={28}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="topic" stroke="#888" fontSize={11} interval={0} angle={-12} height={50} />
+                <YAxis stroke="#888" fontSize={12} domain={[0, 100]} />
+                <Tooltip contentStyle={{
                   background: '#1a1a2e',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '8px',
-                }}
-              />
-              <Bar dataKey="score" fill="#818cf8" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+                }} />
+                <Bar dataKey="score" fill="#818cf8" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>
+              Topic-level performance will appear after your first completed quiz.
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Activity Feed */}
+      {/* Recent Quizzes */}
       <div style={glass}>
         <h3 style={{
           fontSize: '0.8rem', fontWeight: 600,
           color: 'rgba(255,255,255,0.4)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          textTransform: 'uppercase', letterSpacing: '0.08em',
           marginBottom: '1rem',
-        }}>
-          Recent Activity
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          {activityFeed.map((item, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center',
-              gap: '0.75rem',
-              paddingBottom: '0.85rem',
-              borderBottom: i < activityFeed.length - 1
-                ? '1px solid rgba(255,255,255,0.05)' : 'none',
-            }}>
-              <div style={{
-                width: '8px', height: '8px', borderRadius: '50%',
-                background: '#818cf8', flexShrink: 0,
-              }} />
-              <span style={{ flex: 1, fontSize: '0.88rem', color: 'rgba(255,255,255,0.8)' }}>
-                {item.text}
-              </span>
-              <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.3)' }}>
-                {item.time}
-              </span>
-            </div>
-          ))}
-        </div>
+        }}>Recent Quiz Performance</h3>
+        {loading ? (
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>
+            Loading your recent quizzes...
+          </p>
+        ) : dashboardData.recentQuizzes?.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {dashboardData.recentQuizzes.map((item, i) => (
+              <div key={`${item.quiz}-${item.date}-${i}`} style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                paddingBottom: '0.85rem',
+                borderBottom: i < dashboardData.recentQuizzes.length - 1
+                  ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              }}>
+                <div style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: item.score >= 70 ? '#6ee7b7' : item.score >= 40 ? '#fde68a' : '#fca5a5',
+                  flexShrink: 0,
+                }} />
+                <span style={{ flex: 1, fontSize: '0.88rem', color: 'rgba(255,255,255,0.85)' }}>
+                  {item.quiz}
+                </span>
+                <span style={{ fontSize: '0.86rem', color: '#93c5fd', minWidth: '60px', textAlign: 'right' }}>
+                  {Math.round(item.score)}%
+                </span>
+                <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.3)', minWidth: '90px', textAlign: 'right' }}>
+                  {formatDate(item.date)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>
+            No recent quizzes yet. Complete a topic quiz to populate this section.
+          </p>
+        )}
       </div>
 
     </DashboardLayout>

@@ -1,0 +1,309 @@
+package com.studybuddy.backend.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.studybuddy.backend.dto.AiSwotInputDTO;
+import com.studybuddy.backend.dto.QuizQuestionDTO;
+import com.studybuddy.backend.dto.SwotAnalysisDTO;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class GeminiService {
+
+    @Value("${gemini.api.key}")
+    private String apiKey;
+
+    private final WebClient webClient = WebClient.builder()
+            .baseUrl("https://generativelanguage.googleapis.com")
+            .codecs(config -> config.defaultCodecs().maxInMemorySize(2 * 1024 * 1024))
+            .build();
+
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    // Try multiple models in order
+    private final String[] MODELS = {
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3-flash-preview",
+    };
+
+    public List<QuizQuestionDTO> generateQuiz(String topicName, String subjectName) {
+        String prompt = buildPrompt(topicName, subjectName);
+        String requestBody = buildRequestBody(prompt);
+
+        for (String model : MODELS) {
+            try {
+                System.out.println("Trying model: " + model);
+                String response = webClient.post()
+                        .uri("/v1beta/models/" + model + ":generateContent")
+                        .header("Content-Type", "application/json")
+                        .header("x-goog-api-key", apiKey)
+                        .bodyValue(requestBody)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+
+                List<QuizQuestionDTO> questions = parseQuestions(response);
+                if (questions != null && !questions.isEmpty()) {
+                    System.out.println("Success with model: " + model);
+                    return questions;
+                }
+            } catch (Exception e) {
+                System.err.println("Model " + model + " failed: " + e.getMessage());
+            }
+        }
+
+        System.err.println("All models failed, using fallback questions");
+        return getFallbackQuestions(topicName);
+    }
+
+    public SwotAnalysisDTO generateSwotAnalysis(AiSwotInputDTO input) {
+        if (apiKey == null || apiKey.isBlank() || input == null) {
+            return null;
+        }
+
+        String prompt = """
+                You are an academic and career advisor AI.
+
+                Analyze the student data and generate a SWOT analysis.
+
+                IMPORTANT:
+                - Do NOT list raw topic names directly unless absolutely necessary.
+                - Convert the data into meaningful patterns and insights.
+                - Focus on understanding, consistency, practice behavior, and risk.
+                - If totalTests < 5, clearly advise the student to attempt more tests.
+                - Return ONLY valid JSON with this shape:
+                {
+                  "strengths": [],
+                  "weaknesses": [],
+                  "opportunities": [],
+                  "threats": [],
+                  "summary": ""
+                }
+
+                Student data:
+                %s
+                """.formatted(writeJson(input));
+
+        String response = generatePlainText(prompt);
+        return parseSwotAnalysis(response);
+    }
+
+    public String generateSwotSummary(List<String> strengths,
+                                      List<String> weaknesses,
+                                      List<String> opportunities,
+                                      List<String> threats) {
+        String prompt = """
+                Write a short, encouraging SWOT summary for a student.
+                Keep it under 90 words and mention only the provided points.
+
+                Strengths: %s
+                Weaknesses: %s
+                Opportunities: %s
+                Threats: %s
+                """.formatted(strengths, weaknesses, opportunities, threats);
+
+        String response = generatePlainText(prompt);
+        if (response == null || response.isBlank()) {
+            return buildFallbackSwotSummary(strengths, weaknesses, opportunities, threats);
+        }
+        return response.trim();
+    }
+
+    private String buildRequestBody(String prompt) {
+        return """
+                {
+                  "contents": [{
+                    "parts": [{
+                      "text": "%s"
+                    }]
+                  }],
+                  "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 2048
+                  }
+                }
+                """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n"));
+    }
+
+    private String generatePlainText(String prompt) {
+        if (apiKey == null || apiKey.isBlank()) {
+            return null;
+        }
+
+        String requestBody = buildRequestBody(prompt);
+
+        for (String model : MODELS) {
+            try {
+                String response = webClient.post()
+                        .uri("/v1beta/models/" + model + ":generateContent")
+                        .header("Content-Type", "application/json")
+                        .header("x-goog-api-key", apiKey)
+                        .bodyValue(requestBody)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+
+                JsonNode root = mapper.readTree(response);
+                return root.path("candidates").get(0)
+                        .path("content")
+                        .path("parts").get(0)
+                        .path("text")
+                        .asText();
+            } catch (Exception ignored) {
+            }
+        }
+
+        return null;
+    }
+
+    private String writeJson(Object value) {
+        try {
+            return mapper.writeValueAsString(value);
+        } catch (Exception exception) {
+            return "{}";
+        }
+    }
+
+    private SwotAnalysisDTO parseSwotAnalysis(String response) {
+        if (response == null || response.isBlank()) {
+            return null;
+        }
+
+        try {
+            String text = response.trim();
+            if (text.startsWith("```")) {
+                text = text.replaceAll("```json", "").replaceAll("```", "").trim();
+            }
+
+            int start = text.indexOf('{');
+            int end = text.lastIndexOf('}');
+            if (start >= 0 && end > start) {
+                text = text.substring(start, end + 1);
+            }
+
+            SwotAnalysisDTO analysis = mapper.readValue(text, SwotAnalysisDTO.class);
+            if (analysis.getStrengths() == null) analysis.setStrengths(new ArrayList<>());
+            if (analysis.getWeaknesses() == null) analysis.setWeaknesses(new ArrayList<>());
+            if (analysis.getOpportunities() == null) analysis.setOpportunities(new ArrayList<>());
+            if (analysis.getThreats() == null) analysis.setThreats(new ArrayList<>());
+            return analysis;
+        } catch (Exception exception) {
+            return null;
+        }
+    }
+
+    private String buildPrompt(String topicName, String subjectName) {
+        return """
+                Generate exactly 10 multiple choice questions about "%s" from the subject "%s".
+                
+                Rules:
+                - Each question must have exactly 4 options
+                - Only one option is correct
+                - Questions should be academic level for engineering students
+                - Mix easy, medium and hard questions
+                - Return ONLY valid JSON, no markdown, no extra text
+                
+                Format:
+                [
+                  {
+                    "question": "Question text here?",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correctIndex": 0
+                  }
+                ]
+                """.formatted(topicName, subjectName);
+    }
+
+    private List<QuizQuestionDTO> parseQuestions(String response) {
+        try {
+            JsonNode root = mapper.readTree(response);
+            String text = root
+                    .path("candidates").get(0)
+                    .path("content")
+                    .path("parts").get(0)
+                    .path("text").asText();
+
+            text = text.trim();
+            if (text.startsWith("```")) {
+                text = text.replaceAll("```json", "").replaceAll("```", "").trim();
+            }
+
+            // Find JSON array in response
+            int start = text.indexOf('[');
+            int end = text.lastIndexOf(']');
+            if (start >= 0 && end > start) {
+                text = text.substring(start, end + 1);
+            }
+
+            JsonNode questionsNode = mapper.readTree(text);
+            List<QuizQuestionDTO> questions = new ArrayList<>();
+
+            for (JsonNode q : questionsNode) {
+                QuizQuestionDTO dto = new QuizQuestionDTO();
+                dto.setQuestion(q.path("question").asText());
+
+                List<String> options = new ArrayList<>();
+                for (JsonNode opt : q.path("options")) {
+                    options.add(opt.asText());
+                }
+                dto.setOptions(options);
+                dto.setCorrectIndex(q.path("correctIndex").asInt());
+
+                if (!dto.getQuestion().isEmpty() && dto.getOptions().size() == 4) {
+                    questions.add(dto);
+                }
+            }
+
+            return questions;
+
+        } catch (Exception e) {
+            System.err.println("Parse error: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private List<QuizQuestionDTO> getFallbackQuestions(String topicName) {
+        List<QuizQuestionDTO> fallback = new ArrayList<>();
+        String[][] qa = {
+            {"What is the primary purpose of " + topicName + "?",
+             "Data storage", "Problem solving", "Code optimization", "Network communication", "1"},
+            {"Which of the following best describes " + topicName + "?",
+             "A hardware component", "A software concept", "A network protocol", "A database type", "1"},
+            {"" + topicName + " is most commonly used in which field?",
+             "Computer Science", "Biology", "Chemistry", "Physics", "0"},
+            {"What is a key advantage of " + topicName + "?",
+             "Simplicity", "Efficiency", "Cost reduction", "Speed", "1"},
+            {"Which concept is closely related to " + topicName + "?",
+             "Algorithms", "Hardware design", "Network topology", "Database schema", "0"},
+        };
+        for (String[] q : qa) {
+            QuizQuestionDTO dto = new QuizQuestionDTO();
+            dto.setQuestion(q[0]);
+            dto.setOptions(List.of(q[1], q[2], q[3], q[4]));
+            dto.setCorrectIndex(Integer.parseInt(q[5]));
+            fallback.add(dto);
+        }
+        return fallback;
+    }
+
+    private String buildFallbackSwotSummary(List<String> strengths,
+                                            List<String> weaknesses,
+                                            List<String> opportunities,
+                                            List<String> threats) {
+        String strength = strengths.isEmpty() ? "your progress is still being established" : strengths.get(0);
+        String weakness = weaknesses.isEmpty() ? "no major weak areas are visible yet" : weaknesses.get(0);
+        String opportunity = opportunities.isEmpty() ? "keep attempting more topics to reveal new opportunities" : opportunities.get(0);
+        String threat = threats.isEmpty() ? "there are no immediate threat signals right now" : threats.get(0);
+
+        return "You are doing best where " + strength + " while " + weakness
+                + ". A good next step is to focus on " + opportunity
+                + ". Also watch out for " + threat + ".";
+    }
+}

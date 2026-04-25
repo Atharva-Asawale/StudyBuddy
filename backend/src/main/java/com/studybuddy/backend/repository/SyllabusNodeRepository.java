@@ -22,11 +22,19 @@ public interface SyllabusNodeRepository extends JpaRepository<SyllabusNode, UUID
 
     List<SyllabusNode> findByCreatedByIdAndIsCustomTrue(UUID userId);
 
+    List<SyllabusNode> findByBranchAndSemesterGreaterThanEqual(String branch, Integer semester);
+
     // NEW — fetch ALL nodes in one query
     @Query("SELECT n FROM SyllabusNode n LEFT JOIN FETCH n.parent " +
            "WHERE n.branch = :branch AND n.semester <= :semester " +
            "ORDER BY n.semester ASC")
     List<SyllabusNode> findByBranchAndSemesterLessThanEqualOrderBySemesterAsc(
+        @Param("branch") String branch,
+        @Param("semester") Integer semester
+    );
+
+    @Query("SELECT n FROM SyllabusNode n LEFT JOIN FETCH n.parent WHERE n.branch = :branch AND n.semester = :semester")
+    List<SyllabusNode> findByBranchAndSemester(
         @Param("branch") String branch,
         @Param("semester") Integer semester
     );

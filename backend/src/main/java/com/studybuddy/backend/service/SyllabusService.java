@@ -20,18 +20,16 @@ public class SyllabusService {
     @Autowired
     private UserRepository userRepository;
 
-    public List<SyllabusNodeDTO> getSyllabusTree(String email) {
+    public List<SyllabusNodeDTO> getSyllabusTree(String email, Integer targetSemester) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String branch = user.getBranch();
-        Integer currentSemester = user.getCurrentSemester();
+        Integer currentSemester = targetSemester != null ? targetSemester : user.getCurrentSemester();
 
-        // Load ALL nodes for this branch at once — single query
+        // Load ALL nodes for this branch and specific semester at once
         List<SyllabusNode> allNodes = syllabusNodeRepository
-                .findByBranchAndSemesterLessThanEqualOrderBySemesterAsc(
-                        branch, currentSemester
-                );
+                .findByBranchAndSemester(branch, currentSemester);
 
         // Build tree in memory — no more recursive DB calls
         return buildTreeInMemory(allNodes);

@@ -32,9 +32,16 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
             if (jwtUtil.validateToken(token)) {
                 String email = jwtUtil.extractEmail(token);
+                String role = jwtUtil.extractRole(token);
+                
+                java.util.List<org.springframework.security.core.GrantedAuthority> authorities = java.util.List.of();
+                if (role != null) {
+                    authorities = java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                }
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                email, null, List.of()
+                                email, null, authorities
                         );
                 authentication.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)

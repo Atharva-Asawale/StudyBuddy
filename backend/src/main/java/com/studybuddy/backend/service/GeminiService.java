@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.studybuddy.backend.dto.AiSwotInputDTO;
 import com.studybuddy.backend.dto.QuizQuestionDTO;
 import com.studybuddy.backend.dto.SwotAnalysisDTO;
+import com.studybuddy.backend.dto.LearningDebtGraphDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -132,7 +133,7 @@ public class GeminiService {
                 """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n"));
     }
 
-    private String generatePlainText(String prompt) {
+    public String generatePlainText(String prompt) {
         if (apiKey == null || apiKey.isBlank()) {
             return null;
         }
@@ -305,5 +306,81 @@ public class GeminiService {
         return "You are doing best where " + strength + " while " + weakness
                 + ". A good next step is to focus on " + opportunity
                 + ". Also watch out for " + threat + ".";
+    }
+
+    public List<LearningDebtGraphDTO.AffectedTopicDTO> analyzeLearningDebt(String topicName, String topicId, String studentBranch, int studentSemester, String futureTopicsJSON, double score) {
+        if (apiKey == null || apiKey.isBlank()) {
+            return new ArrayList<>();
+        }
+
+        String prompt = """
+                You are the StudyBuddy AI Mentor, an expert in academic dependency mapping.
+                
+                Context:
+                - Student Branch: %s
+                - Current Semester: %d
+                - Assessment Result: The student scored %.0f%% in "%s" (ID: %s).
+                - Assessment Meaning: A score below 60%% indicates a fundamental weakness that will cause 'Learning Debt' in future complex topics.
+                
+                Input Data (Future Topics):
+                %s
+                
+                Your Task:
+                Identify exactly 2 or 3 topics from the "Future Topics" list above that have a DIRECT dependency on the concepts in "%s".
+                For example, if the weakness is in "Differentiation", an affected topic might be "Integration".
+                
+                Strict Rules:
+                1. SELECT topics ONLY from the provided Future Topics list.
+                2. USE the exact "id" provided in the list for each selected topic.
+                3. DO NOT invent new topics. If no strong dependencies exist, return an empty array.
+                4. PROVIDE a concise, one-sentence academic reason for the dependency.
+                5. RETURN ONLY a raw JSON array. NO markdown blocks (```json), NO preamble, NO extra text.
+                
+                Required JSON Format:
+                [
+                  {
+                    "id": "uuid-from-list",
+                    "name": "Topic Name",
+                    "reason": "Clear explanation of how knowledge of %s is required here."
+                  }
+                ]
+                """.formatted(studentBranch, studentSemester, score, topicName, topicId, futureTopicsJSON, topicName, topicName);
+
+        String response = generatePlainText(prompt);
+        return parseLearningDebt(response);
+    }
+
+    private List<LearningDebtGraphDTO.AffectedTopicDTO> parseLearningDebt(String response) {
+        if (response == null || response.isBlank()) {
+            return new ArrayList<>();
+        }
+
+        try {
+            String text = response.trim();
+            if (text.startsWith("```")) {
+                text = text.replaceAll("```json", "").replaceAll("```", "").trim();
+            }
+
+            int start = text.indexOf('[');
+            int end = text.lastIndexOf(']');
+            if (start >= 0 && end > start) {
+                text = text.substring(start, end + 1);
+            }
+
+            JsonNode rootNode = mapper.readTree(text);
+            List<LearningDebtGraphDTO.AffectedTopicDTO> affects = new ArrayList<>();
+            for (JsonNode node : rootNode) {
+                LearningDebtGraphDTO.AffectedTopicDTO dto = new LearningDebtGraphDTO.AffectedTopicDTO();
+                dto.setId(java.util.UUID.fromString(node.path("id").asText()));
+                dto.setName(node.path("name").asText());
+                dto.setReason(node.path("reason").asText());
+                dto.setSource("ai");
+                affects.add(dto);
+            }
+            return affects;
+        } catch (Exception e) {
+            System.err.println("Learning Debt parse error: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 }

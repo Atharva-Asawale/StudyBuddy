@@ -33,9 +33,10 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setBranch(request.getBranch());
         user.setCurrentSemester(request.getCurrentSemester());
+        user.setRole("STUDENT");
 
         User saved = userRepository.save(user);
-        String token = jwtUtil.generateToken(saved.getEmail());
+        String token = jwtUtil.generateToken(saved.getEmail(), saved.getRole());
 
         return new AuthResponse(
                 token,
@@ -43,7 +44,8 @@ public class AuthService {
                 saved.getEmail(),
                 saved.getBranch(),
                 saved.getCurrentSemester(),
-                saved.getId().toString()
+                saved.getId().toString(),
+                saved.getRole()
         );
     }
 
@@ -55,7 +57,7 @@ public class AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
         return new AuthResponse(
                 token,
@@ -63,7 +65,8 @@ public class AuthService {
                 user.getEmail(),
                 user.getBranch(),
                 user.getCurrentSemester(),
-                user.getId().toString()
+                user.getId().toString(),
+                user.getRole()
         );
     }
 }

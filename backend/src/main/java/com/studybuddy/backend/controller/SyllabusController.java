@@ -20,9 +20,10 @@ public class SyllabusController {
 
     @GetMapping
     public ResponseEntity<List<SyllabusNodeDTO>> getSyllabus(
-            @AuthenticationPrincipal String email) {
+            @AuthenticationPrincipal String email,
+            @RequestParam(required = false) Integer semester) {
         try {
-            List<SyllabusNodeDTO> tree = syllabusService.getSyllabusTree(email);
+            List<SyllabusNodeDTO> tree = syllabusService.getSyllabusTree(email, semester);
             return ResponseEntity.ok(tree);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();

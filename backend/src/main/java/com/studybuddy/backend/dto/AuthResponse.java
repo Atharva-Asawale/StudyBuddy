@@ -12,4 +12,5 @@ public class AuthResponse {
     private String branch;
     private Integer currentSemester;
     private String userId;
+    private String role;
 }

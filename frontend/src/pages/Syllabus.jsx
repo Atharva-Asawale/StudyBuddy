@@ -362,16 +362,22 @@ function SubjectCard({ node, onRefresh }) {
 
 // ─── Main Syllabus Page ─────────────────────────────────────
 export default function Syllabus() {
-  const { currentUser } = useAuth();
-  const [tree, setTree] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeSem, setActiveSem] = useState(currentUser?.currentSemester || 3);
+  const { currentUser, cachedSyllabusData, cacheSyllabusData } = useAuth();
+  const initialSem = cachedSyllabusData?.semester || currentUser?.currentSemester || 3;
+  const isCacheHit = cachedSyllabusData && cachedSyllabusData.semester === initialSem;
 
-  const fetchTree = async () => {
+  const [tree, setTree] = useState(isCacheHit ? cachedSyllabusData.data : []);
+  const [loading, setLoading] = useState(!isCacheHit);
+  const [error, setError] = useState('');
+  const [activeSem, setActiveSem] = useState(initialSem);
+
+  const fetchTree = async (sem) => {
+    setLoading(true);
+    setError('');
     try {
-      const res = await syllabusService.getTree();
+      const res = await syllabusService.getTree(sem);
       setTree(res.data);
+      cacheSyllabusData({ semester: sem, data: res.data });
     } catch (err) {
       setError('Failed to load syllabus. Make sure your branch matches exactly.');
     } finally {
@@ -380,56 +386,61 @@ export default function Syllabus() {
   };
 
   useEffect(() => {
-    fetchTree();
-  }, []);
+    if (cachedSyllabusData && cachedSyllabusData.semester === activeSem) {
+      setTree(cachedSyllabusData.data);
+      setLoading(false);
+      setError('');
+    } else {
+      fetchTree(activeSem);
+    }
+  }, [activeSem]);
 
-  // Group by semester
-  const semesters = [...new Set(tree.map(n => n.semester))].sort();
-  const filtered = tree.filter(n => n.semester === activeSem);
+  const allSemesters = [3, 4, 5, 6, 7, 8];
 
   return (
     <DashboardLayout>
 
       {/* Header */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div>
             <h2 style={{
-              fontSize: '1.6rem', fontWeight: 700,
+              fontSize: '1.8rem', fontWeight: 700,
               color: 'white', letterSpacing: '-0.02em',
               marginBottom: '0.35rem',
             }}>
               Syllabus Tree
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.88rem' }}>
-              Branch: <span style={{ color: '#818cf8', fontWeight: 600 }}>
+            <p style={{ color: '#000000', fontSize: '0.95rem', fontWeight: 600 }}>
+              Branch: <span style={{ color: '#818cf8', fontWeight: 700 }}>
                 {currentUser?.branch || '—'}
               </span>
             </p>
           </div>
 
           {/* Legend */}
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             {Object.entries(typeConfig).map(([type, { color, icon }]) => (
               <div key={type} style={{
                 display: 'flex', alignItems: 'center',
-                gap: '0.35rem', fontSize: '0.72rem',
+                gap: '0.4rem', fontSize: '0.75rem',
                 color: 'rgba(255,255,255,0.4)',
               }}>
-                <span>{icon}</span>
-                <span style={{ color }}>{type}</span>
+                <span style={{ fontWeight: 600 }}>{icon}</span>
+                <span style={{ color, fontWeight: 700 }}>{type}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Semester Tabs */}
-        {semesters.length > 0 && (
+        {allSemesters.length > 0 && (
           <div style={{
             display: 'flex', gap: '0.5rem',
-            marginTop: '1.25rem', flexWrap: 'wrap',
+            marginTop: '1.5rem', flexWrap: 'wrap',
+            justifyContent: 'center'
           }}>
-            {semesters.map(sem => (
+            {allSemesters.map(sem => (
               <button
                 key={sem}
                 onClick={() => setActiveSem(sem)}
@@ -483,7 +494,7 @@ export default function Syllabus() {
             Make sure it matches exactly with the database (e.g. "CSE" or "CSE (AIML)").
           </p>
         </div>
-      ) : filtered.length === 0 ? (
+      ) : tree.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: '4rem',
           color: 'rgba(255,255,255,0.3)',
@@ -499,8 +510,8 @@ export default function Syllabus() {
         </div>
       ) : (
         <div>
-          {filtered.map(subject => (
-            <SubjectCard key={subject.id} node={subject} onRefresh={fetchTree} />
+          {tree.map(subject => (
+            <SubjectCard key={subject.id} node={subject} onRefresh={() => fetchTree(activeSem)} />
           ))}
         </div>
       )}

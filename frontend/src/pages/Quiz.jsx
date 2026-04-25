@@ -59,6 +59,26 @@ export default function Quiz() {
       });
       setResult(res.data);
       setCurrent(0);
+
+      const existing = (() => {
+        try {
+          const raw = sessionStorage.getItem('studybuddy_quiz_results');
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      })();
+
+      const nextEntry = {
+        topicId,
+        topicName: decodeURIComponent(topicName || 'Topic'),
+        score: Number(res.data?.percentage ?? 0),
+        attemptedAt: new Date().toISOString(),
+      };
+
+      const filtered = existing.filter((item) => String(item?.topicId) !== String(topicId));
+      sessionStorage.setItem('studybuddy_quiz_results', JSON.stringify([nextEntry, ...filtered]));
     } catch (err) {
       setError('Failed to submit quiz. Please try again.');
     } finally {
@@ -71,11 +91,11 @@ export default function Quiz() {
   // ─── Loading ───────────────────────────────────────────
   if (loading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout noSidebar={true}>
         <div style={{
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          minHeight: '60vh', gap: '1rem',
+          minHeight: '80vh', gap: '1rem', textAlign: 'center'
         }}>
           <div style={{
             width: '48px', height: '48px', borderRadius: '50%',
@@ -83,10 +103,10 @@ export default function Quiz() {
             borderTop: '3px solid #818cf8',
             animation: 'spin 1s linear infinite',
           }} />
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
-            Generating quiz for <strong style={{ color: '#818cf8' }}>{decodedName}</strong>...
+          <p style={{ color: '#000000', fontSize: '1rem', fontWeight: 600 }}>
+            Generating quiz for <strong style={{ color: '#818cf8', fontWeight: 700 }}>{decodedName}</strong>...
           </p>
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>
+          <p style={{ color: '#000000', fontSize: '0.86rem', fontWeight: 600 }}>
             AI is creating 10 questions just for you ✨
           </p>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -98,8 +118,8 @@ export default function Quiz() {
   // ─── Error ─────────────────────────────────────────────
   if (error) {
     return (
-      <DashboardLayout>
-        <div style={{ ...glass, textAlign: 'center', padding: '3rem' }}>
+      <DashboardLayout noSidebar={true}>
+        <div style={{ ...glass, textAlign: 'center', padding: '3rem', maxWidth: '600px', margin: '0 auto' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
           <p style={{ color: '#fca5a5', marginBottom: '1.5rem' }}>{error}</p>
           <button onClick={fetchQuiz} style={{
@@ -121,8 +141,8 @@ export default function Quiz() {
     const color = pct >= 70 ? '#6ee7b7' : pct >= 50 ? '#fde68a' : '#fca5a5';
 
     return (
-      <DashboardLayout>
-        <div style={{ maxWidth: '900px', width: '100%' }}>
+      <DashboardLayout noSidebar={true}>
+        <div style={{ maxWidth: '1100px', width: '100%', margin: '0 auto' }}>
 
           {/* Score Card */}
           <div style={{
@@ -138,7 +158,7 @@ export default function Quiz() {
             <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem' }}>
               {decodedName}
             </h2>
-            <div style={{ fontSize: '4rem', fontWeight: 700, color, lineHeight: 1, marginBottom: '0.5rem' }}>
+            <div style={{ fontSize: '5rem', fontWeight: 700, color, lineHeight: 1, marginBottom: '0.5rem' }}>
               {pct}%
             </div>
             <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)', marginBottom: '1rem' }}>
@@ -156,7 +176,7 @@ export default function Quiz() {
             }}>
               {result.mastered ? '✅ Topic Mastered!' : '📚 Keep Practicing'}
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem' }}>
+            <p style={{ color: '#000000', fontSize: '0.9rem', fontWeight: 600 }}>
               {result.feedback}
             </p>
           </div>
@@ -164,10 +184,10 @@ export default function Quiz() {
           {/* Review Answers */}
           <div style={{ ...glass, marginBottom: '1.5rem' }}>
             <h3 style={{
-              fontSize: '0.8rem', fontWeight: 600,
+              fontSize: '0.9rem', fontWeight: 600,
               color: 'rgba(255,255,255,0.4)',
               textTransform: 'uppercase', letterSpacing: '0.08em',
-              marginBottom: '1.25rem',
+              marginBottom: '1.25rem', textAlign: 'center'
             }}>
               Answer Review
             </h3>
@@ -246,29 +266,29 @@ export default function Quiz() {
   const answered = Object.keys(selected).length;
 
   return (
-    <DashboardLayout>
-      <div style={{ maxWidth: '900px', width: '100%' }}>
+    <DashboardLayout noSidebar={true}>
+      <div style={{ maxWidth: '1100px', width: '100%', margin: '0 auto' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
           <button
             onClick={() => navigate('/syllabus')}
             style={{
               background: 'transparent',
               border: 'none', color: 'rgba(255,255,255,0.4)',
-              cursor: 'pointer', fontSize: '0.85rem',
-              marginBottom: '0.75rem', padding: 0,
+              cursor: 'pointer', fontSize: '0.9rem',
+              marginBottom: '1.5rem', padding: 0,
             }}
           >
             ← Back to Syllabus
           </button>
           <h2 style={{
-            fontSize: '1.4rem', fontWeight: 700,
-            color: 'white', marginBottom: '0.25rem',
+            fontSize: '1.8rem', fontWeight: 700,
+            color: 'white', marginBottom: '0.5rem',
           }}>
             {decodedName}
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+          <p style={{ color: '#000000', fontSize: '1rem', fontWeight: 600 }}>
             {answered} of {questions.length} answered
           </p>
         </div>
@@ -288,8 +308,8 @@ export default function Quiz() {
 
         {/* Question Navigation Pills */}
         <div style={{
-          display: 'flex', gap: '0.4rem',
-          marginBottom: '1.5rem', flexWrap: 'wrap',
+          display: 'flex', gap: '0.5rem',
+          marginBottom: '2rem', flexWrap: 'wrap', justifyContent: 'center'
         }}>
           {questions.map((_, i) => (
             <button
@@ -323,15 +343,15 @@ export default function Quiz() {
         {/* Current Question */}
         <div style={{ ...glass, marginBottom: '1.25rem' }}>
           <div style={{
-            fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)',
-            marginBottom: '0.75rem',
+            fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)',
+            marginBottom: '1rem', textAlign: 'center'
           }}>
             Question {current + 1} of {questions.length}
           </div>
           <p style={{
-            fontSize: '1rem', fontWeight: 600,
+            fontSize: '1.25rem', fontWeight: 600,
             color: 'white', lineHeight: 1.6,
-            marginBottom: '1.25rem',
+            marginBottom: '1.5rem', textAlign: 'center'
           }}>
             {q.question}
           </p>

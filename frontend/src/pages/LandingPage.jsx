@@ -1,9 +1,14 @@
+import { Link } from 'react-router-dom';
+
 export default function LandingPage({ openLogin }) {
   return (
     <div className="landing-container">
       <nav className="navbar glass-panel">
         <h2 className="logo">StudyBuddy</h2>
-        <button className="login-btn" onClick={openLogin}>Sign In</button>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          <Link to="/admin/login" style={{ color: '#a0a0b0', textDecoration: 'none', fontSize: '14px', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '6px' }}>Admin Login</Link>
+          <button className="login-btn" onClick={openLogin}>Sign In</button>
+        </div>
       </nav>
 
       <section className="hero">

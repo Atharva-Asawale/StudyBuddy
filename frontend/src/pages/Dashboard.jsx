@@ -2,6 +2,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
 import { debtService, studentService } from '../services/api';
+import StreakCard from '../components/StreakCard';
 import {
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
@@ -37,7 +38,7 @@ export default function Dashboard() {
       try {
         const [dashboardRes, debtRes] = await Promise.all([
           studentService.getDashboard(),
-          debtService.getDebt(),
+          debtService.getGraph(),
         ]);
         cacheDashboardData(dashboardRes.data);
         cacheDebtData(debtRes.data);
@@ -65,7 +66,7 @@ export default function Dashboard() {
     try {
       const [dashboardRes, debtRes] = await Promise.all([
         studentService.getDashboard(),
-        debtService.getDebt(),
+        debtService.getGraph(),
       ]);
       cacheDashboardData(dashboardRes.data);
       cacheDebtData(debtRes.data);
@@ -109,8 +110,8 @@ export default function Dashboard() {
       {/* Welcome Card */}
       <div style={{
         ...glass,
-        display: 'flex',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
+        justifyContent: 'center',
         alignItems: 'center',
         gap: '1rem',
         flexWrap: 'wrap',
@@ -118,55 +119,33 @@ export default function Dashboard() {
         background: 'rgba(129,140,248,0.08)',
         borderColor: 'rgba(129,140,248,0.2)',
       }}>
-        <div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+        <div style={{ textAlign: 'center', width: '100%' }}>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.5rem' }}>
             Welcome back, {currentUser?.name?.split(' ')[0] || 'Student'}
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
+          <p style={{ color: '#000000', fontSize: '1rem', fontWeight: 600 }}>
             {currentUser?.branch} | Semester {currentUser?.currentSemester}
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button
             type="button"
             onClick={handleRefresh}
             disabled={loading || refreshing}
             style={{
-              padding: '0.75rem 1rem',
+              padding: '0.75rem 1.8rem',
               borderRadius: '10px',
               border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(255,255,255,0.06)',
+              background: 'rgba(255,255,255,0.1)',
               color: 'white',
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: loading || refreshing ? 'not-allowed' : 'pointer',
               opacity: loading || refreshing ? 0.6 : 1,
             }}
           >
-            {refreshing ? 'Refreshing...' : 'Refresh Dashboard'}
+            {refreshing ? 'Refreshing...' : 'Refresh Dashboard Data'}
           </button>
-
-          <div style={{
-            textAlign: 'right',
-            background: 'rgba(0,0,0,0.2)',
-            padding: '1rem 1.5rem',
-            borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.06)',
-          }}>
-            <div style={{
-              fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)',
-              letterSpacing: '0.1em', textTransform: 'uppercase',
-              marginBottom: '0.25rem',
-            }}>
-              Learning Debt
-            </div>
-            <div style={{ fontSize: '2.2rem', fontWeight: 700, color: '#6ee7b7', lineHeight: 1 }}>
-              {loading ? '--' : `${Math.round(debtData.totalDebt || 0)}`}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.25rem' }}>
-              {loading ? '' : `${debtData.weakTopics?.length || 0} weak topics`}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -199,23 +178,27 @@ export default function Dashboard() {
         ))}
       </div>
 
+      <div style={{ marginBottom: '1.5rem' }}>
+        <StreakCard />
+      </div>
+
       {/* Weak Topics */}
       <div style={{ ...glass, marginBottom: '1.5rem' }}>
         <h3 style={{
           fontSize: '0.8rem', fontWeight: 600,
           color: 'rgba(255,255,255,0.4)',
           textTransform: 'uppercase', letterSpacing: '0.08em',
-          marginBottom: '1rem',
+          marginBottom: '1rem', textAlign: 'center'
         }}>
           Weak Topics
         </h3>
 
         {loading ? (
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.88rem' }}>
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.88rem', textAlign: 'center' }}>
             Analyzing your topics...
           </p>
         ) : debtData.weakTopics?.length > 0 ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
             {debtData.weakTopics.map((topic, i) => (
               <span key={i} style={{
                 padding: '0.4rem 0.85rem',
@@ -224,7 +207,7 @@ export default function Dashboard() {
                 borderRadius: '999px',
                 color: '#fca5a5', fontSize: '0.82rem',
               }}>
-                {topic}
+                {topic.name || topic.topicName || (typeof topic === 'string' ? topic : 'Unknown Topic')}
               </span>
             ))}
           </div>
@@ -245,7 +228,7 @@ export default function Dashboard() {
             fontSize: '0.8rem', fontWeight: 600,
             color: 'rgba(255,255,255,0.4)',
             textTransform: 'uppercase', letterSpacing: '0.08em',
-            marginBottom: '1rem',
+            marginBottom: '1rem', textAlign: 'center'
           }}>Performance Trend</h3>
           {loading ? (
             <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>
@@ -283,7 +266,7 @@ export default function Dashboard() {
             fontSize: '0.8rem', fontWeight: 600,
             color: 'rgba(255,255,255,0.4)',
             textTransform: 'uppercase', letterSpacing: '0.08em',
-            marginBottom: '1rem',
+            marginBottom: '1rem', textAlign: 'center'
           }}>Top Topic Scores</h3>
           {loading ? (
             <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>
@@ -317,7 +300,7 @@ export default function Dashboard() {
           fontSize: '0.8rem', fontWeight: 600,
           color: 'rgba(255,255,255,0.4)',
           textTransform: 'uppercase', letterSpacing: '0.08em',
-          marginBottom: '1rem',
+          marginBottom: '1rem', textAlign: 'center'
         }}>Recent Quiz Performance</h3>
         {loading ? (
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.88rem' }}>

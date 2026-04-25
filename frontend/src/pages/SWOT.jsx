@@ -94,6 +94,7 @@ export default function SWOT() {
             fontWeight: 700,
             color,
             marginBottom: '0.85rem',
+            textAlign: 'center',
           }}>
             {key}
           </h3>
@@ -139,15 +140,15 @@ export default function SWOT() {
     <DashboardLayout>
 
       {/* Page Title */}
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
         <h2 style={{
-          fontSize: '1.6rem', fontWeight: 700,
+          fontSize: '1.8rem', fontWeight: 700,
           color: 'white', letterSpacing: '-0.02em',
-          marginBottom: '0.35rem',
+          marginBottom: '0.5rem',
         }}>
           SWOT Analysis
         </h2>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.88rem' }}>
+        <p style={{ color: '#000000', fontSize: '0.95rem', fontWeight: 600 }}>
           Auto-generated based on your quiz performance and topic mastery
         </p>
       </div>
@@ -170,7 +171,7 @@ export default function SWOT() {
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#93c5fd', marginBottom: '0.35rem' }}>
                 Performance Insights (Data-Based)
               </h3>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.84rem' }}>
+              <p style={{ color: '#000000', fontSize: '0.84rem', fontWeight: 600 }}>
                 Derived from quiz scores, attempt frequency, and trend patterns.
               </p>
             </div>
@@ -208,7 +209,7 @@ export default function SWOT() {
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#6ee7b7', marginBottom: '0.35rem' }}>
                 AI-Powered Analysis
               </h3>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.84rem' }}>
+              <p style={{ color: '#000000', fontSize: '0.84rem', fontWeight: 600 }}>
                 Generated with Gemini from your aggregated student performance data.
               </p>
             </div>

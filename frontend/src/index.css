@@ -318,3 +318,13 @@ body {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
+@keyframes streakPop {
+  0% { transform: scale(1); box-shadow: var(--glass-shadow); }
+  50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(249, 115, 22, 0.6); }
+  100% { transform: scale(1); box-shadow: var(--glass-shadow); }
+}
+
+.streak-pop {
+  animation: streakPop 0.6s ease-in-out;
+}

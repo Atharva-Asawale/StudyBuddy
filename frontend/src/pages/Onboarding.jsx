@@ -84,11 +84,11 @@ export default function Onboarding() {
       <div className="auth-card glass-panel" style={{ width: '100%', maxWidth: '480px' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '24px', textAlign: 'center' }}>
           <h2 style={{ marginBottom: '6px' }}>
             {step === 1 ? '📚 Study Behavior' : '🎓 Academic Baseline'}
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          <p style={{ color: '#000000', fontSize: '1rem', fontWeight: 600 }}>
             {step === 1
               ? `Welcome, ${currentUser?.name?.split(' ')[0] || 'Student'}! Tell us about your study habits.`
               : 'Almost done! Enter your academic background.'}

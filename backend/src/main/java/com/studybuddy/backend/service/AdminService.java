@@ -20,6 +20,9 @@ public class AdminService {
     private final CustomTestRepository customTestRepository;
     private final SyllabusNodeRepository syllabusNodeRepository;
     private final TopicProgressRepository topicProgressRepository;
+    private final StudentProfileRepository studentProfileRepository;
+    private final AcademicBaselineRepository academicBaselineRepository;
+    private final SemesterRepository semesterRepository;
 
     public AdminStatsResponse getPlatformStats() {
         long totalStudents = userRepository.countByRole("STUDENT");
@@ -58,11 +61,24 @@ public class AdminService {
             }
         }
 
+        double totalCgpa = 0;
+        int cgpaCount = 0;
+        for (User u : users) {
+            List<Semester> sems = semesterRepository.findByUserIdOrderBySemesterNumberAsc(u.getId());
+            if (!sems.isEmpty()) {
+                Semester last = sems.get(sems.size() - 1);
+                if (last.getCgpa() != null) {
+                    totalCgpa += last.getCgpa().doubleValue();
+                    cgpaCount++;
+                }
+            }
+        }
+
         AdminStatsResponse stats = new AdminStatsResponse();
         stats.setTotalStudents((int) totalStudents);
         stats.setTotalCSE(branchDist.getOrDefault("CSE", 0));
         stats.setTotalAIML(branchDist.getOrDefault("AIML", 0));
-        stats.setAverageCgpa(8.5); // Mock overall avg cgpa
+        stats.setAverageCgpa(cgpaCount > 0 ? totalCgpa / cgpaCount : 0.0);
         stats.setTotalQuizzesTaken((int) totalQuizzes);
         stats.setPlatformAverageScore(avgScore);
         stats.setTotalMasteredTopics((int) masteredCount);
@@ -100,6 +116,15 @@ public class AdminService {
         long weak = syllabusResults.stream().filter(r -> r.getScore().doubleValue() < 40).count()
                 + customResults.stream().filter(t -> t.getPercentage().doubleValue() < 40).count();
 
+        List<Semester> semesters = semesterRepository.findByUserIdOrderBySemesterNumberAsc(student.getId());
+        double latestCgpa = 0.0;
+        if (!semesters.isEmpty()) {
+            Semester last = semesters.get(semesters.size() - 1);
+            if (last.getCgpa() != null) {
+                latestCgpa = last.getCgpa().doubleValue();
+            }
+        }
+
         StudentListDTO dto = new StudentListDTO();
         dto.setUserId(student.getId());
         dto.setName(student.getName());
@@ -107,7 +132,7 @@ public class AdminService {
         dto.setBranch(student.getBranch());
         dto.setCurrentSemester(student.getCurrentSemester());
         dto.setAverageScore(overallAvg);
-        dto.setLatestCgpa(8.0 + (overallAvg > 0 ? (overallAvg / 100.0) * 2.0 : 0)); // Mocking CGPA roughly based on platform score
+        dto.setLatestCgpa(latestCgpa);
         dto.setTotalQuizzes(syllabusResults.size() + customResults.size());
         dto.setMasteredTopics((int) mastered);
         dto.setWeakTopics((int) weak);
@@ -116,6 +141,7 @@ public class AdminService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
     public StudentDetailDTO getStudentDetail(UUID studentId) {
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -123,33 +149,91 @@ public class AdminService {
         List<QuizResult> syllabusResults = quizResultRepository.findByUserIdOrderByAttemptedAtDesc(student.getId());
         List<CustomTest> customResults = customTestRepository.findByUserIdOrderByCreatedAtDesc(student.getId());
 
-        List<TopicPerformanceDTO> performance = new ArrayList<>();
+        List<StudentDetailDTO.TopicProgressItem> topicProgress = new ArrayList<>();
         
-        // Add syllabus performance
+        long mastered = 0;
+        long weak = 0;
+        
         Map<String, List<QuizResult>> syllabusByTopic = syllabusResults.stream()
                 .collect(Collectors.groupingBy(r -> r.getTopic().getName()));
         
-        syllabusByTopic.forEach((topic, results) -> {
-            double avg = results.stream().mapToDouble(r -> r.getScore().doubleValue()).average().orElse(0);
-            performance.add(new TopicPerformanceDTO(topic, avg, results.size(), avg >= 70));
-        });
+        for (Map.Entry<String, List<QuizResult>> entry : syllabusByTopic.entrySet()) {
+            double avg = entry.getValue().stream().mapToDouble(r -> r.getScore().doubleValue()).average().orElse(0);
+            StudentDetailDTO.TopicProgressItem item = new StudentDetailDTO.TopicProgressItem();
+            item.setTopicId(UUID.randomUUID().toString());
+            item.setTopicName(entry.getKey());
+            item.setScore(avg);
+            item.setMastered(avg >= 70);
+            topicProgress.add(item);
+            if (avg >= 70) mastered++;
+            if (avg < 40) weak++;
+        }
 
-        // Add custom performance with tag
         Map<String, List<CustomTest>> customByTopic = customResults.stream()
                 .collect(Collectors.groupingBy(t -> "[Custom Test] " + t.getTopicName()));
         
-        customByTopic.forEach((topic, results) -> {
-            double avg = results.stream().mapToDouble(t -> t.getPercentage().doubleValue()).average().orElse(0);
-            performance.add(new TopicPerformanceDTO(topic, avg, results.size(), avg >= 70));
-        });
+        for (Map.Entry<String, List<CustomTest>> entry : customByTopic.entrySet()) {
+            double avg = entry.getValue().stream().mapToDouble(t -> t.getPercentage().doubleValue()).average().orElse(0);
+            StudentDetailDTO.TopicProgressItem item = new StudentDetailDTO.TopicProgressItem();
+            item.setTopicId(UUID.randomUUID().toString());
+            item.setTopicName(entry.getKey());
+            item.setScore(avg);
+            item.setMastered(avg >= 70);
+            topicProgress.add(item);
+            if (avg >= 70) mastered++;
+            if (avg < 40) weak++;
+        }
 
         StudentDetailDTO dto = new StudentDetailDTO();
         dto.setId(student.getId());
         dto.setName(student.getName());
         dto.setEmail(student.getEmail());
         dto.setBranch(student.getBranch());
-        dto.setSemester(student.getCurrentSemester());
-        dto.setPerformance(performance);
+        dto.setCurrentSemester(student.getCurrentSemester());
+        dto.setTotalQuizzes(syllabusResults.size() + customResults.size());
+        dto.setMasteredTopics((int) mastered);
+        dto.setWeakTopics((int) weak);
+        
+        StudentProfile profile = studentProfileRepository.findById(student.getId()).orElse(null);
+        if (profile != null) {
+            dto.setStudyHoursPerDay(profile.getStudyHoursPerDay());
+            dto.setStressLevel(profile.getStressLevel());
+            dto.setPreferredStudyTime(profile.getPreferredStudyTime());
+            dto.setConsistencyScore(profile.getConsistencyScore());
+        }
+        
+        AcademicBaseline baseline = academicBaselineRepository.findById(student.getId()).orElse(null);
+        if (baseline != null) {
+            dto.setTenthPercentage(baseline.getTenthPercentage());
+            dto.setTwelfthPercentage(baseline.getTwelfthPercentage());
+        }
+        
+        List<Semester> semesters = semesterRepository.findByUserIdOrderBySemesterNumberAsc(student.getId());
+        List<StudentDetailDTO.SemesterData> semDataList = new ArrayList<>();
+        double latestCgpa = 0.0;
+        
+        for (Semester sem : semesters) {
+            StudentDetailDTO.SemesterData semData = new StudentDetailDTO.SemesterData();
+            semData.setSemesterNumber(sem.getSemesterNumber());
+            semData.setCgpa(sem.getCgpa() != null ? sem.getCgpa().doubleValue() : 0.0);
+            latestCgpa = semData.getCgpa();
+            
+            List<StudentDetailDTO.SubjectData> subDataList = new ArrayList<>();
+            if (sem.getSubjects() != null) {
+                for (SubjectPerformance sp : sem.getSubjects()) {
+                    StudentDetailDTO.SubjectData subData = new StudentDetailDTO.SubjectData();
+                    subData.setSubjectName(sp.getSubjectName());
+                    subData.setScore(sp.getScore() != null ? sp.getScore().doubleValue() : 0.0);
+                    subDataList.add(subData);
+                }
+            }
+            semData.setSubjects(subDataList);
+            semDataList.add(semData);
+        }
+        
+        dto.setLatestCgpa(latestCgpa);
+        dto.setSemesters(semDataList);
+        dto.setTopicProgress(topicProgress);
         
         return dto;
     }

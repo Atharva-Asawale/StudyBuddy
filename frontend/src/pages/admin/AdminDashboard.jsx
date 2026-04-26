@@ -84,7 +84,9 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchData();
+    if (!cachedAdminStats) {
+      fetchData();
+    }
   }, []);
 
   const fetchData = async () => {

@@ -33,14 +33,16 @@ const AnalyticCard = ({ title, value, subtext, icon: Icon, color }) => (
 );
 
 export default function AdminAnalytics() {
-  const { cachedWeakTopics, cacheWeakTopics } = useAuth();
-  const [students, setStudents] = useState([]); // This isn't cached here yet, but stats are.
+  const { cachedWeakTopics, cacheWeakTopics, cachedAdminStudents, cacheAdminStudents } = useAuth();
+  const [students, setStudents] = useState(cachedAdminStudents || []);
   const [weakTopics, setWeakTopics] = useState(cachedWeakTopics || []);
   const [loading, setLoading] = useState(!cachedWeakTopics);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchData();
+    if (!cachedWeakTopics || students.length === 0) {
+      fetchData();
+    }
   }, []);
 
   const fetchData = async () => {
@@ -52,6 +54,7 @@ export default function AdminAnalytics() {
       ]);
       setStudents(studentsRes.data);
       setWeakTopics(weakTopicsRes.data);
+      cacheAdminStudents(studentsRes.data);
       cacheWeakTopics(weakTopicsRes.data);
     } catch (err) {
       if (!cachedWeakTopics) setError('Failed to load analytics data');

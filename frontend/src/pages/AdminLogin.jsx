@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authService, passwordResetService } from '../services/api';
@@ -142,46 +142,54 @@ export default function AdminLogin() {
     finally { setLoading(false); }
   };
 
+  const Background = useMemo(() => (
+    <div style={{
+      position: 'fixed', top: 0, left: 0,
+      width: '100%', height: '100%', zIndex: 0,
+      willChange: 'transform',
+      transform: 'translateZ(0)',
+    }}>
+      <Iridescence color={[0.5, 0.6, 0.9]} speed={1} amplitude={0.1} mouseReact />
+    </div>
+  ), []);
+
   return (
     <div style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a1a' }}>
+      {Background}
 
-      <div style={{
-        position: 'fixed', top: 0, left: 0,
-        width: '100%', height: '100%', zIndex: 0,
-        willChange: 'transform',
-        transform: 'translateZ(0)',
-      }}>
-        <Iridescence color={[0.5, 0.6, 0.9]} speed={1} amplitude={0.1} mouseReact />
-      </div>
+      <button 
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute',
+          top: '30px',
+          left: '30px',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          padding: '0.6rem 1.2rem',
+          borderRadius: '999px',
+          color: 'rgba(255, 255, 255, 0.6)',
+          cursor: 'pointer',
+          fontSize: '0.9rem',
+          transition: 'all 0.2s',
+          backdropFilter: 'blur(4px)'
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.color = '#fff'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'; }}
+      >
+        <ArrowLeft size={16} /> Back to Home
+      </button>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1, gap: '1rem' }}>
-        <button 
-          onClick={() => navigate('/')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            padding: '0.6rem 1.2rem',
-            borderRadius: '999px',
-            color: 'rgba(255, 255, 255, 0.6)',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            transition: 'all 0.2s',
-            backdropFilter: 'blur(4px)'
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.color = '#fff'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'; }}
-        >
-          <ArrowLeft size={16} /> Back to Home
-        </button>
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1, gap: '1rem' }}>
 
-        <div className="auth-card glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '40px', borderRadius: '16px', background: 'rgba(0, 0, 0, 0.6)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="auth-card glass-panel" style={{ width: '90vw', maxWidth: '450px', padding: '50px', borderRadius: '24px', background: 'rgba(0, 0, 0, 0.6)', border: '1px solid rgba(255,255,255,0.1)' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{ color: 'Cyan', margin: 0, fontSize: '24px' }}>StudyBuddy</h1>
-          <p style={{ color: '#d5eb0dff', margin: '5px 0 0', fontSize: '14px', fontWeight: 'bold', letterSpacing: '2px' }}>ADMIN PORTAL</p>
+          <h1 style={{ color: 'Cyan', margin: 0, fontSize: '30px' }}>StudyBuddy</h1>
+          <p style={{ color: '#d5eb0dff', margin: '5px 0 0', fontSize: '15px', fontWeight: 'bold', letterSpacing: '3px' }}>ADMIN PORTAL</p>
         </div>
 
         {mode === 'forgot' ? (
@@ -249,13 +257,13 @@ export default function AdminLogin() {
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '15px' }}>
-              <input type="email" name="email" placeholder="Admin Email" style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} value={formData.email} onChange={handleInput} />
+            <div style={{ marginBottom: '20px' }}>
+              <input type="email" name="email" placeholder="Admin Email" style={{ width: '100%', padding: '16px', fontSize: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} value={formData.email} onChange={handleInput} />
             </div>
-            <div style={{ marginBottom: '15px', position: 'relative' }}>
-              <input type={showPassword ? "text" : "password"} name="password" placeholder="Password" style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} value={formData.password} onChange={handleInput} />
-              <div style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: '#a0a0b0' }} onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            <div style={{ marginBottom: '20px', position: 'relative' }}>
+              <input type={showPassword ? "text" : "password"} name="password" placeholder="Password" style={{ width: '100%', padding: '16px', fontSize: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} value={formData.password} onChange={handleInput} />
+              <div style={{ position: 'absolute', right: '16px', top: '16px', cursor: 'pointer', color: '#a0a0b0' }} onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
               </div>
             </div>
 
@@ -265,7 +273,7 @@ export default function AdminLogin() {
               <span style={{ fontSize: '12px', color: '#a0a0b0', cursor: 'pointer' }} onClick={() => setMode('forgot')}>Forgot Password?</span>
             </div>
 
-            <button type="submit" disabled={loading} style={{ width: '100%', padding: '12px', background: '#5865F2', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
+            <button type="submit" disabled={loading} style={{ width: '100%', padding: '16px', background: '#5865F2', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}>
               {loading ? 'Authenticating...' : 'Sign In as Admin'}
             </button>
           </form>

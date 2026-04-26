@@ -25,7 +25,9 @@ export default function AdminStudents() {
   const [selectedUserId, setSelectedUserId] = useState(searchParams.get('selected'));
 
   useEffect(() => {
-    fetchStudents();
+    if (students.length === 0 || sortBy !== 'createdAt') {
+      fetchStudents();
+    }
   }, [sortBy]);
 
   const fetchStudents = async () => {

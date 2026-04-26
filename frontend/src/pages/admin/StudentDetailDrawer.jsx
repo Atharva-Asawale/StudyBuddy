@@ -132,7 +132,7 @@ export default function StudentDetailDrawer({ userId, onClose }) {
                   </div>
                   <div>
                     <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>Consistency</div>
-                    <div style={{ fontSize: '0.9rem' }}>{student.consistencyScore || '0'}/100</div>
+                    <div style={{ fontSize: '0.9rem' }}>{student.consistencyScore || '0'}/5</div>
                   </div>
                 </div>
               </div>

@@ -25,7 +25,7 @@ public class AdminController {
         try {
             String adminEmail = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("Admin {} fetching stats", adminEmail);
-            return ResponseEntity.ok(adminService.getAdminStats());
+            return ResponseEntity.ok(adminService.getPlatformStats());
         } catch (Exception e) {
             log.error("Error fetching admin stats", e);
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -38,7 +38,7 @@ public class AdminController {
             @RequestParam(required = false) String branch,
             @RequestParam(required = false) String sortBy) {
         try {
-            return ResponseEntity.ok(adminService.getAllStudents(search, branch, sortBy));
+            return ResponseEntity.ok(adminService.getStudents(search, branch, null));
         } catch (Exception e) {
             log.error("Error fetching students list", e);
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -58,7 +58,7 @@ public class AdminController {
     @GetMapping("/weak-topics")
     public ResponseEntity<?> getWeakTopics() {
         try {
-            return ResponseEntity.ok(adminService.getWeakTopics());
+            return ResponseEntity.ok(adminService.getPlatformWeakTopics());
         } catch (Exception e) {
             log.error("Error fetching weak topics", e);
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

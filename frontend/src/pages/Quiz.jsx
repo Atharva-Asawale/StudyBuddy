@@ -17,22 +17,25 @@ export default function Quiz() {
 
   const [questions, setQuestions] = useState([]);
   const [selected, setSelected] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [current, setCurrent] = useState(0);
   const [error, setError] = useState('');
+  const [file, setFile] = useState(null);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    fetchQuiz();
+    // We wait for user to click "Start"
   }, [topicId]);
 
   const fetchQuiz = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await quizService.generate(topicId);
+      const res = await quizService.generate(topicId, file);
       setQuestions(res.data);
+      setStarted(true);
     } catch (err) {
       setError('Failed to generate quiz. Please try again.');
     } finally {
@@ -103,13 +106,88 @@ export default function Quiz() {
             borderTop: '3px solid #818cf8',
             animation: 'spin 1s linear infinite',
           }} />
-          <p style={{ color: '#000000', fontSize: '1rem', fontWeight: 600 }}>
-            Generating quiz for <strong style={{ color: '#818cf8', fontWeight: 700 }}>{decodedName}</strong>...
+          <p style={{ color: 'white', fontSize: '1.2rem', fontWeight: 600 }}>
+            {file ? "Analyzing Document..." : "Generating Questions..."}
           </p>
-          <p style={{ color: '#000000', fontSize: '0.86rem', fontWeight: 600 }}>
-            AI is creating 10 questions just for you ✨
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
+            AI is crafting 10 questions for <strong style={{ color: '#818cf8' }}>{decodedName}</strong>
           </p>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // ─── Prepare Screen ────────────────────────────────────
+  if (!started && !result) {
+    return (
+      <DashboardLayout noSidebar={true}>
+        <div style={{ maxWidth: '600px', margin: '4rem auto', ...glass, textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>🎯</div>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'white' }}>
+            Ready for your Quiz?
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '2rem' }}>
+            Topic: <span style={{ color: '#818cf8', fontWeight: 600 }}>{decodedName}</span>
+          </p>
+
+          <div style={{
+            background: 'rgba(129,140,248,0.05)',
+            border: '1px dashed rgba(129,140,248,0.3)',
+            borderRadius: '12px', padding: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            <p style={{ fontSize: '0.9rem', color: '#818cf8', fontWeight: 600, marginBottom: '0.5rem' }}>
+              Want more precise questions?
+            </p>
+            <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem' }}>
+              Upload your PDF notes and the AI will test you strictly on your material.
+            </p>
+            
+            <input 
+              type="file" 
+              id="rag-file" 
+              accept=".pdf,.docx" 
+              onChange={(e) => setFile(e.target.files[0])}
+              style={{ display: 'none' }}
+            />
+            <label htmlFor="rag-file" style={{
+              display: 'inline-block', padding: '0.6rem 1.25rem',
+              background: file ? 'rgba(110,231,183,0.1)' : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${file ? '#6ee7b7' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: '8px', cursor: 'pointer',
+              color: file ? '#6ee7b7' : 'white', fontSize: '0.85rem',
+              fontWeight: 600, transition: 'all 0.2s'
+            }}>
+              {file ? `✅ ${file.name}` : '📁 Upload Notes (Optional)'}
+            </label>
+            {file && (
+              <button onClick={() => setFile(null)} style={{
+                marginLeft: '0.5rem', background: 'transparent', border: 'none',
+                color: '#fca5a5', cursor: 'pointer', fontSize: '0.8rem'
+              }}>Remove</button>
+            )}
+          </div>
+
+          <button onClick={fetchQuiz} style={{
+            width: '100%', padding: '1rem',
+            background: 'linear-gradient(135deg, #818cf8, #c084fc)',
+            border: 'none', borderRadius: '12px',
+            color: 'white', fontWeight: 700, fontSize: '1rem',
+            cursor: 'pointer', transition: 'transform 0.2s'
+          }}
+            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            Start Quiz →
+          </button>
+          
+          <button onClick={() => navigate('/syllabus')} style={{
+            marginTop: '1rem', background: 'transparent', border: 'none',
+            color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '0.85rem'
+          }}>
+            Cancel and Go Back
+          </button>
         </div>
       </DashboardLayout>
     );
@@ -176,7 +254,7 @@ export default function Quiz() {
             }}>
               {result.mastered ? '✅ Topic Mastered!' : '📚 Keep Practicing'}
             </div>
-            <p style={{ color: '#000000', fontSize: '0.9rem', fontWeight: 600 }}>
+            <p style={{ color: 'white', fontSize: '0.9rem' }}>
               {result.feedback}
             </p>
           </div>
@@ -288,7 +366,7 @@ export default function Quiz() {
           }}>
             {decodedName}
           </h2>
-          <p style={{ color: '#000000', fontSize: '1rem', fontWeight: 600 }}>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
             {answered} of {questions.length} answered
           </p>
         </div>

@@ -1,17 +1,15 @@
 package com.studybuddy.backend.dto;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class StudentDetailDTO extends StudentSummaryDTO {
-    private List<SemesterResponse> semesters;
-    private BigDecimal tenthPercentage;
-    private BigDecimal twelfthPercentage;
-    private Integer studyHoursPerDay;
-    private Integer consistencyScore;
-    private List<TopicProgressDTO> topicProgress;
+public class StudentDetailDTO {
+    private UUID id;
+    private String name;
+    private String email;
+    private String branch;
+    private Integer semester;
+    private List<TopicPerformanceDTO> performance;
 }

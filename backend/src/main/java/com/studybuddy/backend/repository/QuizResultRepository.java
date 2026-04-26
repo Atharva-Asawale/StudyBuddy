@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface QuizResultRepository extends JpaRepository<QuizResult, UUID> {
-    List<QuizResult> findByUserOrderByAttemptedAtAsc(User user);
-    List<QuizResult> findTop5ByUserOrderByAttemptedAtDesc(User user);
+    List<QuizResult> findByUserIdOrderByAttemptedAtAsc(UUID userId);
+    List<QuizResult> findByUserIdOrderByAttemptedAtDesc(UUID userId);
+    List<QuizResult> findTop5ByUserIdOrderByAttemptedAtDesc(UUID userId);
 }

@@ -11,12 +11,14 @@ import com.studybuddy.backend.repository.QuizResultRepository;
 import com.studybuddy.backend.repository.SyllabusNodeRepository;
 import com.studybuddy.backend.repository.TopicProgressRepository;
 import com.studybuddy.backend.repository.UserRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.UUID;
 
 @Service
@@ -24,6 +26,9 @@ public class QuizService {
 
     @Autowired
     private GeminiService geminiService;
+
+    @Autowired
+    private RagService ragService;
 
     @Autowired
     private SyllabusNodeRepository syllabusNodeRepository;
@@ -37,13 +42,93 @@ public class QuizService {
     @Autowired
     private QuizResultRepository quizResultRepository;
 
+    private final ObjectMapper mapper = new ObjectMapper();
+
     // Generate quiz for a topic
-    public List<QuizQuestionDTO> generateQuiz(UUID topicId) {
+    public List<QuizQuestionDTO> generateQuiz(UUID topicId, MultipartFile file) {
         SyllabusNode topic = syllabusNodeRepository.findById(topicId)
                 .orElseThrow(() -> new RuntimeException("Topic not found"));
 
         String subjectName = getSubjectName(topic);
+
+        if (file != null && !file.isEmpty()) {
+            return generateRagQuiz(topic.getName(), subjectName, file);
+        }
+
         return geminiService.generateQuiz(topic.getName(), subjectName);
+    }
+
+    private List<QuizQuestionDTO> generateRagQuiz(String topicName, String subjectName, MultipartFile file) {
+        try {
+            String rawText = ragService.extractText(file);
+            String cleanedText = rawText.trim().replaceAll("\\s+", " ");
+            
+            List<Map<String, String>> knowledgeMap = ragService.extractCoreFacts(cleanedText);
+            String keywordsJson = mapper.writeValueAsString(knowledgeMap);
+            String selectedChunks = ragService.getSelectedChunks(cleanedText, knowledgeMap);
+
+            String prompt = String.format("""
+                [SYSTEM: PRECISION EXAM GENERATOR]
+                You are a subject matter expert. Generate a 10-question MCQ quiz for topic "%s" in subject "%s".
+                
+                [CORE KNOWLEDGE MAP (JSON)]:
+                %s
+                
+                [SOURCE MATERIAL (TEXT)]:
+                %s
+                
+                RULES:
+                1. Generate exactly 10 questions.
+                2. Mix easy, medium, and hard difficulty.
+                3. Each question must have 4 options and one correctIndex (0-3).
+                
+                FORMAT:
+                [
+                  {
+                    "question": "...",
+                    "options": ["A", "B", "C", "D"],
+                    "correctIndex": 0
+                  }
+                ]
+                """, topicName, subjectName, keywordsJson, selectedChunks);
+
+            String response = geminiService.generatePlainText(prompt);
+            return parseQuestions(response);
+
+        } catch (Exception e) {
+            throw new RuntimeException("RAG Quiz generation failed: " + e.getMessage());
+        }
+    }
+
+    private List<QuizQuestionDTO> parseQuestions(String text) {
+        try {
+            if (text == null || text.isBlank()) return new ArrayList<>();
+            
+            String json = text.trim();
+            if (json.startsWith("```")) {
+                json = json.replaceAll("```json", "").replaceAll("```", "").trim();
+            }
+            int start = json.indexOf('[');
+            int end = json.lastIndexOf(']');
+            if (start >= 0 && end > start) json = json.substring(start, end + 1);
+
+            JsonNode nodes = mapper.readTree(json);
+            List<QuizQuestionDTO> questions = new ArrayList<>();
+            for (JsonNode node : nodes) {
+                QuizQuestionDTO q = new QuizQuestionDTO();
+                q.setQuestion(node.path("question").asText());
+                List<String> options = new ArrayList<>();
+                for (JsonNode opt : node.path("options")) options.add(opt.asText());
+                q.setOptions(options);
+                q.setCorrectIndex(node.path("correctIndex").asInt());
+                if (!q.getQuestion().isEmpty() && q.getOptions().size() == 4) {
+                    questions.add(q);
+                }
+            }
+            return questions;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     // Submit quiz and save progress
@@ -108,7 +193,10 @@ public class QuizService {
     }
 
     private String getSubjectName(SyllabusNode node) {
-        if (node.getParent() == null) return node.getName();
-        return getSubjectName(node.getParent());
+        SyllabusNode current = node;
+        while (current != null && !"SUBJECT".equals(current.getType())) {
+            current = current.getParent();
+        }
+        return current != null ? current.getName() : "General";
     }
 }

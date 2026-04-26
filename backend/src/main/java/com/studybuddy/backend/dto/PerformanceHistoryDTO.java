@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class WeakTopicDTO {
-    private String topicName;
-    private double avgScore;
-    private int weakCount;
+public class PerformanceHistoryDTO {
+    private String date;
+    private double score;
+    private String topic;
 }

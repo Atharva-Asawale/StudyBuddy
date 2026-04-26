@@ -21,7 +21,7 @@ public class StudentAnalyticsController {
     public ResponseEntity<StudentDashboardResponse> getDashboard(
             @AuthenticationPrincipal String email) {
         try {
-            return ResponseEntity.ok(studentAnalyticsService.getDashboard(email));
+            return ResponseEntity.ok(studentAnalyticsService.getDashboardData(email));
         } catch (RuntimeException exception) {
             return ResponseEntity.badRequest().build();
         }
@@ -31,7 +31,7 @@ public class StudentAnalyticsController {
     public ResponseEntity<StudentSwotResponse> getSwot(
             @AuthenticationPrincipal String email) {
         try {
-            return ResponseEntity.ok(studentAnalyticsService.getSwot(email));
+            return ResponseEntity.ok(studentAnalyticsService.getSwotData(email));
         } catch (RuntimeException exception) {
             return ResponseEntity.badRequest().build();
         }

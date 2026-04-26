@@ -71,7 +71,20 @@ export const debtService = {
 };
 
 export const quizService = {
-  generate: (topicId) => API.get(`/api/quiz/generate/${topicId}`),
+  generate: (topicId, file) => {
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      return axios.post(`${API_BASE}/api/quiz/generate/${topicId}`, formData, {
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'multipart/form-data'
+        },
+        timeout: 120000
+      });
+    }
+    return API.post(`/api/quiz/generate/${topicId}`);
+  },
   submit: (data) => API.post('/api/quiz/submit', data),
 };
 

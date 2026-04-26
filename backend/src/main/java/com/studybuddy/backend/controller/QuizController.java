@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -26,12 +27,13 @@ public class QuizController {
     private final Map<String, List<QuizQuestionDTO>> quizCache =
             new ConcurrentHashMap<>();
 
-    @GetMapping("/generate/{topicId}")
+    @PostMapping("/generate/{topicId}")
     public ResponseEntity<List<QuizQuestionDTO>> generateQuiz(
             @AuthenticationPrincipal String email,
-            @PathVariable UUID topicId) {
+            @PathVariable UUID topicId,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
-            List<QuizQuestionDTO> questions = quizService.generateQuiz(topicId);
+            List<QuizQuestionDTO> questions = quizService.generateQuiz(topicId, file);
 
             // Cache questions for this user+topic
             String cacheKey = email + ":" + topicId;

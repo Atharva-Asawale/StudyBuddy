@@ -8,16 +8,11 @@ import com.studybuddy.backend.dto.CustomTestSubmitRequest;
 import com.studybuddy.backend.entity.CustomTest;
 import com.studybuddy.backend.entity.User;
 import com.studybuddy.backend.repository.CustomTestRepository;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,6 +26,9 @@ public class CustomTestService {
     @Autowired
     private GeminiService geminiService;
 
+    @Autowired
+    private RagService ragService;
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     public List<CustomQuizQuestionDTO> generateQuiz(MultipartFile file, int easyCount, int mediumCount, int hardCount, String topicName) throws IOException {
@@ -43,108 +41,56 @@ public class CustomTestService {
             throw new IllegalArgumentException("Counts cannot be negative.");
         }
 
-        // Step 2: Extract text (ALL IN MEMORY)
-        String rawText = "";
-        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
-
-        try {
-            if (filename.endsWith(".pdf")) {
-                try (PDDocument doc = PDDocument.load(file.getInputStream())) {
-                    PDFTextStripper stripper = new PDFTextStripper();
-                    stripper.setSortByPosition(true);
-                    rawText = stripper.getText(doc);
-                }
-            } else if (filename.endsWith(".docx") || filename.endsWith(".doc")) {
-                try (XWPFDocument doc = new XWPFDocument(file.getInputStream())) {
-                    XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
-                    rawText = extractor.getText();
-                }
-            } else {
-                throw new IllegalArgumentException("Unsupported file type. Please upload a PDF or DOCX file.");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to extract text from document. " + e.getMessage());
-        }
-
-        // Clean rawText
+        // Step 2: Extract text
+        String rawText = ragService.extractText(file);
         String cleanedText = rawText.trim().replaceAll("\\s+", " ");
         if (cleanedText.length() < 300) {
             throw new IllegalArgumentException("Document has too little content to generate a quiz.");
         }
 
-        // Step 3: Chunk text (in memory, ~400 words per chunk)
-        String[] words = cleanedText.split("\\s+");
-        List<String> chunks = new ArrayList<>();
-        StringBuilder currentChunk = new StringBuilder();
-        int wordCount = 0;
+        // Step 3: Hybrid 50-50 Analysis (Local)
+        // 3.1 Extract Core Facts (Metadata)
+        List<Map<String, String>> knowledgeMap = ragService.extractCoreFacts(cleanedText);
+        String keywordsJson = "";
+        try {
+            keywordsJson = mapper.writeValueAsString(knowledgeMap);
+        } catch (Exception ignored) {}
 
-        for (String word : words) {
-            currentChunk.append(word).append(" ");
-            wordCount++;
-            if (wordCount >= 400) {
-                chunks.add(currentChunk.toString().trim());
-                currentChunk = new StringBuilder();
-                wordCount = 0;
-            }
-        }
-        if (currentChunk.length() > 0) {
-            chunks.add(currentChunk.toString().trim());
-        }
+        // 3.2 Smart dense selection (Stratified)
+        String selectedChunks = ragService.getSelectedChunks(cleanedText, knowledgeMap);
 
-        if (chunks.isEmpty()) {
-            throw new RuntimeException("Could not extract readable text from this document.");
-        }
-
-        // Step 4: Smart chunk selection
-        List<String> selectedChunksList = new ArrayList<>();
-        if (chunks.size() <= 8) {
-            selectedChunksList = chunks;
-        } else {
-            Set<Integer> indices = new LinkedHashSet<>();
-            indices.add(0);
-            indices.add(1);
-            indices.add(chunks.size() / 4);
-            indices.add(chunks.size() / 2);
-            indices.add((chunks.size() * 3) / 4);
-            indices.add(chunks.size() - 2);
-            indices.add(chunks.size() - 1);
-            
-            for (Integer idx : indices) {
-                if (selectedChunksList.size() < 8 && idx < chunks.size()) {
-                    selectedChunksList.add(chunks.get(idx));
-                }
-            }
-        }
-        String selectedChunks = String.join("\n\n---\n\n", selectedChunksList);
-
-        // Step 5: Generate questions (Single prompt for all to maintain counts)
+        // Step 4: Generate questions (Metadata-First Prompt)
         List<CustomQuizQuestionDTO> allQuestions = new ArrayList<>();
         
         String prompt = String.format("""
-                You are a professional academic exam generator.
-                Generate a Multiple Choice Question (MCQ) quiz based ONLY on the provided context.
+                [SYSTEM: PRECISION EXAM GENERATOR]
+                You are a subject matter expert generating a technical academic exam.
                 
-                COUNTS:
-                - Easy questions: %d
-                - Medium questions: %d
-                - Hard questions: %d
-                - TOTAL questions: %d
-                
-                DIFFICULTY DEFINITIONS:
-                - easy: direct facts, definitions, or clear statements in the text.
-                - medium: reasoning based on the text, connecting related concepts.
-                - hard: complex inference, application of principles, or subtle details.
-                
-                STRICT RULES:
-                1. Generate exactly %d questions in total. No more, no less.
-                2. Do not use external knowledge.
-                3. Each question must have 4 options and one clear answer.
-                4. Provide a reference-based explanation for each answer.
-                
-                CONTEXT:
+                [CORE KNOWLEDGE MAP (JSON)]:
                 %s
                 
-                OUTPUT FORMAT (RAW JSON ARRAY ONLY):
+                [SOURCE MATERIAL (TEXT)]:
+                %s
+                
+                [REQUIRED QUESTION DISTRIBUTION]:
+                - Easy Questions: %d
+                - Medium Questions: %d
+                - Hard Questions: %d
+                - TOTAL: %d
+                
+                [DIFFICULTY CRITERIA]:
+                - easy: Direct recall of facts or definitions from the Knowledge Map.
+                - medium: Requires understanding of how concepts relate or simple application.
+                - hard: Requires deep inference, complex problem solving, or synthesis of multiple parts of the Source Material.
+                
+                [STRICT GUIDELINES]:
+                1. MANDATORY: You MUST generate EXACTLY the numbers specified in the Distribution above.
+                2. If you fail to generate the correct count for 'hard' questions, the quiz is invalid.
+                3. ACCURACY: Every option must be plausible but only one is correct based on the text.
+                4. NO HALLUCINATION: Only use information provided in the JSON or Text.
+                5. Each question must include a "difficulty" field that matches the criteria.
+                
+                OUTPUT: RAW JSON ARRAY ONLY.
                 [
                   {
                     "question": "...",
@@ -154,7 +100,7 @@ public class CustomTestService {
                     "explanation": "..."
                   }
                 ]
-                """, easyCount, mediumCount, hardCount, total, total, selectedChunks);
+                """, keywordsJson, selectedChunks, easyCount, mediumCount, hardCount, total, total);
 
         try {
             String response = geminiService.generatePlainText(prompt);
@@ -188,7 +134,6 @@ public class CustomTestService {
             throw new RuntimeException("AI generation failed or output was malformed: " + e.getMessage());
         }
 
-        // Step 6: Final check
         if (allQuestions.isEmpty()) {
             throw new RuntimeException("Could not generate any questions from this document.");
         }
@@ -196,8 +141,6 @@ public class CustomTestService {
         Collections.shuffle(allQuestions);
         return allQuestions;
     }
-
-    // Removed generateDifficultyQuestions as it's merged into generateQuiz
 
     public CustomTestResultDTO saveResult(CustomTestSubmitRequest request, User user) {
         // Rolling limit: delete oldest if count >= 20

@@ -1,15 +1,16 @@
 package com.studybuddy.backend.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.ArrayList;
+import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SwotAnalysisDTO {
-    private List<String> strengths = new ArrayList<>();
-    private List<String> weaknesses = new ArrayList<>();
-    private List<String> opportunities = new ArrayList<>();
-    private List<String> threats = new ArrayList<>();
-    private String summary;
+    private List<String> strengths;
+    private List<String> weaknesses;
+    private List<String> opportunities;
+    private List<String> threats;
 }

@@ -11,6 +11,7 @@ import java.util.UUID;
 @Repository
 public interface CustomTestRepository extends JpaRepository<CustomTest, UUID> {
     List<CustomTest> findByUserIdOrderByCreatedAtDesc(UUID userId);
+    List<CustomTest> findByUserIdOrderByCreatedAtAsc(UUID userId);
     long countByUserId(UUID userId);
     Optional<CustomTest> findFirstByUserIdOrderByCreatedAtAsc(UUID userId);
 }

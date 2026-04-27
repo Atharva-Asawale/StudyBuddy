@@ -13,4 +13,5 @@ public class SwotAnalysisDTO {
     private List<String> weaknesses;
     private List<String> opportunities;
     private List<String> threats;
+    private String summary;
 }

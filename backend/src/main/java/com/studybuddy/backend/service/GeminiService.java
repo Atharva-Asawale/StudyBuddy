@@ -34,8 +34,8 @@ public class GeminiService {
         "gemini-3-flash-preview",
     };
 
-    public List<QuizQuestionDTO> generateQuiz(String topicName, String subjectName) {
-        String prompt = buildPrompt(topicName, subjectName);
+    public List<QuizQuestionDTO> generateQuiz(String topicName, String subjectName, int easy, int medium, int hard) {
+        String prompt = buildPrompt(topicName, subjectName, easy, medium, hard);
         String requestBody = buildRequestBody(prompt);
 
         for (String model : MODELS) {
@@ -200,15 +200,19 @@ public class GeminiService {
         }
     }
 
-    private String buildPrompt(String topicName, String subjectName) {
+    private String buildPrompt(String topicName, String subjectName, int easy, int medium, int hard) {
         return """
-                Generate exactly 10 multiple choice questions about "%s" from the subject "%s".
+                Generate a multiple choice quiz about "%s" from the subject "%s".
                 
                 Rules:
+                - EXACTLY %d easy questions
+                - EXACTLY %d medium questions
+                - EXACTLY %d hard questions
+                - Total questions: %d
                 - Each question must have exactly 4 options
                 - Only one option is correct
                 - Questions should be academic level for engineering students
-                - Mix easy, medium and hard questions
+                - Include a short, clear explanation for why the answer is correct.
                 - Return ONLY valid JSON, no markdown, no extra text
                 
                 Format:
@@ -216,10 +220,12 @@ public class GeminiService {
                   {
                     "question": "Question text here?",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "difficulty": "easy",
+                    "explanation": "Brief explanation..."
                   }
                 ]
-                """.formatted(topicName, subjectName);
+                """.formatted(topicName, subjectName, easy, medium, hard, (easy + medium + hard));
     }
 
     private List<QuizQuestionDTO> parseQuestions(String response) {
@@ -256,6 +262,8 @@ public class GeminiService {
                 }
                 dto.setOptions(options);
                 dto.setCorrectIndex(q.path("correctIndex").asInt());
+                dto.setDifficulty(q.path("difficulty").asText());
+                dto.setExplanation(q.path("explanation").asText());
 
                 if (!dto.getQuestion().isEmpty() && dto.getOptions().size() == 4) {
                     questions.add(dto);

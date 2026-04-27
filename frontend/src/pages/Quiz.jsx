@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { quizService } from '../services/api';
 
+import { CheckCircle, Plus, Minus, Sparkles, ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
+
 const glass = {
   background: 'rgba(15,15,40,0.6)',
   backdropFilter: 'blur(12px)',
@@ -23,17 +25,30 @@ export default function Quiz() {
   const [current, setCurrent] = useState(0);
   const [error, setError] = useState('');
   const [file, setFile] = useState(null);
+  const [counts, setCounts] = useState({ easy: 5, medium: 3, hard: 2 });
   const [started, setStarted] = useState(false);
+
+  const updateCount = (type, delta) => {
+    const total = counts.easy + counts.medium + counts.hard;
+    if (delta > 0 && total >= 20) return;
+    setCounts(prev => ({
+      ...prev,
+      [type]: Math.max(0, Math.min(20, prev[type] + delta))
+    }));
+  };
+
+  const totalQuestions = counts.easy + counts.medium + counts.hard;
 
   useEffect(() => {
     // We wait for user to click "Start"
   }, [topicId]);
 
   const fetchQuiz = async () => {
+    if (totalQuestions < 3 || totalQuestions > 20) return;
     setLoading(true);
     setError('');
     try {
-      const res = await quizService.generate(topicId, file);
+      const res = await quizService.generate(topicId, file, counts.easy, counts.medium, counts.hard);
       setQuestions(res.data);
       setStarted(true);
     } catch (err) {
@@ -110,7 +125,7 @@ export default function Quiz() {
             {file ? "Analyzing Document..." : "Generating Questions..."}
           </p>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
-            AI is crafting 10 questions for <strong style={{ color: '#818cf8' }}>{decodedName}</strong>
+            AI is crafting {totalQuestions} questions for <strong style={{ color: '#818cf8' }}>{decodedName}</strong>
           </p>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
@@ -135,7 +150,7 @@ export default function Quiz() {
             background: 'rgba(129,140,248,0.05)',
             border: '1px dashed rgba(129,140,248,0.3)',
             borderRadius: '12px', padding: '1.5rem',
-            marginBottom: '2rem'
+            marginBottom: '1.5rem'
           }}>
             <p style={{ fontSize: '0.9rem', color: '#818cf8', fontWeight: 600, marginBottom: '0.5rem' }}>
               Want more precise questions?
@@ -169,15 +184,58 @@ export default function Quiz() {
             )}
           </div>
 
-          <button onClick={fetchQuiz} style={{
-            width: '100%', padding: '1rem',
-            background: 'linear-gradient(135deg, #818cf8, #c084fc)',
-            border: 'none', borderRadius: '12px',
-            color: 'white', fontWeight: 700, fontSize: '1rem',
-            cursor: 'pointer', transition: 'transform 0.2s'
-          }}
-            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+          {/* Difficulty Selectors */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '2rem', textAlign: 'left' }}>
+            <h4 style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Set Difficulty Breakdown</h4>
+            {[
+              { id: 'easy', label: 'Easy', color: '#6ee7b7', icon: '🟢' },
+              { id: 'medium', label: 'Medium', color: '#fcd34d', icon: '🟡' },
+              { id: 'hard', label: 'Hard', color: '#f87171', icon: '🔴' }
+            ].map((diff) => (
+              <div key={diff.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1rem', borderRadius: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span>{diff.icon}</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{diff.label}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <button 
+                    onClick={() => updateCount(diff.id, -1)}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', width: '28px', height: '28px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span style={{ minWidth: '20px', textAlign: 'center', fontWeight: 700 }}>{counts[diff.id]}</span>
+                  <button 
+                    onClick={() => updateCount(diff.id, 1)}
+                    disabled={totalQuestions >= 20}
+                    style={{ 
+                      background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', width: '28px', height: '28px', 
+                      color: totalQuestions >= 20 ? 'rgba(255,255,255,0.1)' : 'white', cursor: totalQuestions >= 20 ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <div style={{ textAlign: 'center', fontSize: '0.9rem', fontWeight: 700, color: totalQuestions > 20 ? '#f87171' : '#6ee7b7', marginTop: '0.5rem' }}>
+              Total Questions: {totalQuestions} / 20
+            </div>
+          </div>
+
+          <button 
+            onClick={fetchQuiz} 
+            disabled={totalQuestions < 3 || totalQuestions > 20}
+            style={{
+              width: '100%', padding: '1rem',
+              background: (totalQuestions < 3 || totalQuestions > 20) ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #818cf8, #c084fc)',
+              border: 'none', borderRadius: '12px',
+              color: 'white', fontWeight: 700, fontSize: '1rem',
+              cursor: (totalQuestions < 3 || totalQuestions > 20) ? 'not-allowed' : 'pointer', transition: 'transform 0.2s'
+            }}
+            onMouseOver={e => { if (totalQuestions >= 3 && totalQuestions <= 20) e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseOut={e => { if (totalQuestions >= 3 && totalQuestions <= 20) e.currentTarget.style.transform = 'translateY(0)'; }}
           >
             Start Quiz →
           </button>
@@ -309,6 +367,17 @@ export default function Quiz() {
                       );
                     })}
                   </div>
+                  {q.explanation && (
+                    <div style={{
+                      marginTop: '0.75rem', padding: '0.75rem',
+                      background: 'rgba(129,140,248,0.05)', borderRadius: '8px',
+                      borderLeft: '3px solid #818cf8', fontSize: '0.8rem',
+                      color: 'rgba(255,255,255,0.7)', lineHeight: 1.4
+                    }}>
+                      <strong style={{ color: '#818cf8', display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Explanation</strong>
+                      {q.explanation}
+                    </div>
+                  )}
                 </div>
               );
             })}

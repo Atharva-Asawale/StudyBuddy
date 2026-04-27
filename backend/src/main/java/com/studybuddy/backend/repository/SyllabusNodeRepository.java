@@ -38,4 +38,6 @@ public interface SyllabusNodeRepository extends JpaRepository<SyllabusNode, UUID
         @Param("branch") String branch,
         @Param("semester") Integer semester
     );
+
+    List<SyllabusNode> findByBranchAndType(String branch, String type);
 }

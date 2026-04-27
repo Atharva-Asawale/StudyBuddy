@@ -2,11 +2,12 @@ package com.studybuddy.backend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class AiSubjectInsightDTO {
-    private String name;
-    private double avgScore;
-    private long attempts;
+    private String subject;
+    private double score;
 }

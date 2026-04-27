@@ -71,11 +71,13 @@ export const debtService = {
 };
 
 export const quizService = {
-  generate: (topicId, file) => {
+  generate: (topicId, file, easy = 5, medium = 3, hard = 2) => {
+    const params = { easyCount: easy, mediumCount: medium, hardCount: hard };
     if (file) {
       const formData = new FormData();
       formData.append('file', file);
       return axios.post(`${API_BASE}/api/quiz/generate/${topicId}`, formData, {
+        params,
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'multipart/form-data'
@@ -83,7 +85,7 @@ export const quizService = {
         timeout: 120000
       });
     }
-    return API.post(`/api/quiz/generate/${topicId}`);
+    return API.post(`/api/quiz/generate/${topicId}`, null, { params });
   },
   submit: (data) => API.post('/api/quiz/submit', data),
 };
@@ -91,6 +93,7 @@ export const quizService = {
 export const studentService = {
   getDashboard: () => API.get('/api/student/dashboard'),
   getSwot: () => API.get('/api/student/swot'),
+  getSwotAnalysis: () => API.get('/api/swot'),
 };
 export const profileService = {
   get: () => {

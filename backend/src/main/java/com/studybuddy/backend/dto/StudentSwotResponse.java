@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StudentSwotResponse {
-    private SwotAnalysisDTO swot;
-    private String summary;
+    private SwotAnalysisDTO ruleBased;
+    private SwotAnalysisDTO aiBased;
 }

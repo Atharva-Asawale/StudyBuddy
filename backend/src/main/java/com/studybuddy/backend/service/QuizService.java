@@ -45,20 +45,20 @@ public class QuizService {
     private final ObjectMapper mapper = new ObjectMapper();
 
     // Generate quiz for a topic
-    public List<QuizQuestionDTO> generateQuiz(UUID topicId, MultipartFile file) {
+    public List<QuizQuestionDTO> generateQuiz(UUID topicId, MultipartFile file, int easy, int medium, int hard) {
         SyllabusNode topic = syllabusNodeRepository.findById(topicId)
                 .orElseThrow(() -> new RuntimeException("Topic not found"));
 
         String subjectName = getSubjectName(topic);
 
         if (file != null && !file.isEmpty()) {
-            return generateRagQuiz(topic.getName(), subjectName, file);
+            return generateRagQuiz(topic.getName(), subjectName, file, easy, medium, hard);
         }
 
-        return geminiService.generateQuiz(topic.getName(), subjectName);
+        return geminiService.generateQuiz(topic.getName(), subjectName, easy, medium, hard);
     }
 
-    private List<QuizQuestionDTO> generateRagQuiz(String topicName, String subjectName, MultipartFile file) {
+    private List<QuizQuestionDTO> generateRagQuiz(String topicName, String subjectName, MultipartFile file, int easy, int medium, int hard) {
         try {
             String rawText = ragService.extractText(file);
             String cleanedText = rawText.trim().replaceAll("\\s+", " ");
@@ -69,7 +69,7 @@ public class QuizService {
 
             String prompt = String.format("""
                 [SYSTEM: PRECISION EXAM GENERATOR]
-                You are a subject matter expert. Generate a 10-question MCQ quiz for topic "%s" in subject "%s".
+                You are a subject matter expert. Generate a multiple choice quiz for topic "%s" in subject "%s".
                 
                 [CORE KNOWLEDGE MAP (JSON)]:
                 %s
@@ -78,19 +78,22 @@ public class QuizService {
                 %s
                 
                 RULES:
-                1. Generate exactly 10 questions.
-                2. Mix easy, medium, and hard difficulty.
+                1. Generate EXACTLY %d easy questions, %d medium questions, and %d hard questions.
+                2. Total questions: %d.
                 3. Each question must have 4 options and one correctIndex (0-3).
+                4. Include a short, clear explanation for each answer.
                 
                 FORMAT:
                 [
                   {
                     "question": "...",
                     "options": ["A", "B", "C", "D"],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "difficulty": "easy",
+                    "explanation": "..."
                   }
                 ]
-                """, topicName, subjectName, keywordsJson, selectedChunks);
+                """, topicName, subjectName, keywordsJson, selectedChunks, easy, medium, hard, (easy + medium + hard));
 
             String response = geminiService.generatePlainText(prompt);
             return parseQuestions(response);
@@ -121,6 +124,8 @@ public class QuizService {
                 for (JsonNode opt : node.path("options")) options.add(opt.asText());
                 q.setOptions(options);
                 q.setCorrectIndex(node.path("correctIndex").asInt());
+                q.setDifficulty(node.path("difficulty").asText());
+                q.setExplanation(node.path("explanation").asText());
                 if (!q.getQuestion().isEmpty() && q.getOptions().size() == 4) {
                     questions.add(q);
                 }

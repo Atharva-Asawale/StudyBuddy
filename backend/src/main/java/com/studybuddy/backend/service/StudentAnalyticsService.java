@@ -29,6 +29,7 @@ public class StudentAnalyticsService {
     private final CustomTestRepository customTestRepository;
     private final SyllabusNodeRepository syllabusNodeRepository;
     private final UserRepository userRepository;
+    private final GeminiService geminiService;
 
     public StudentDashboardResponse getDashboardData(String email) {
         User user = userRepository.findByEmail(email)
@@ -149,8 +150,45 @@ public class StudentAnalyticsService {
         List<String> opportunities = perf.stream().filter(p -> p.getScore() >= 60 && p.getScore() < 80).map(TopicPerformanceDTO::getTopic).limit(4).collect(Collectors.toList());
         List<String> threats = perf.stream().filter(p -> p.getAttempts() > 2 && p.getScore() < 70).map(TopicPerformanceDTO::getTopic).limit(4).collect(Collectors.toList());
 
-        SwotAnalysisDTO swot = new SwotAnalysisDTO(strengths, weaknesses, opportunities, threats);
-        return new StudentSwotResponse(swot, "Keep focusing on your weaknesses while maintaining your core strengths.");
+        SwotAnalysisDTO ruleBased = new SwotAnalysisDTO(strengths, weaknesses, opportunities, threats, 
+            "Keep focusing on your weaknesses while maintaining your core strengths.");
+        
+        // Attempt AI analysis
+        SwotAnalysisDTO aiBased = null;
+        try {
+            com.studybuddy.backend.dto.AiSwotInputDTO aiInput = new com.studybuddy.backend.dto.AiSwotInputDTO();
+            aiInput.setOverallAverage(dash.getAverageScore());
+            aiInput.setTotalTests(dash.getTotalQuizzes());
+            
+            // Map performance to AI insights
+            Map<String, List<TopicPerformanceDTO>> bySubject = perf.stream()
+                .collect(Collectors.groupingBy(p -> (String) inferSubjectFromTopic(p.getTopic())));
+                
+            List<com.studybuddy.backend.dto.AiSubjectInsightDTO> subjectInsights = new ArrayList<>();
+            for (Map.Entry<String, List<TopicPerformanceDTO>> entry : bySubject.entrySet()) {
+                double avg = entry.getValue().stream().mapToDouble(TopicPerformanceDTO::getScore).average().orElse(0.0);
+                com.studybuddy.backend.dto.AiSubjectInsightDTO insight = new com.studybuddy.backend.dto.AiSubjectInsightDTO();
+                insight.setSubject(entry.getKey());
+                insight.setScore(avg);
+                subjectInsights.add(insight);
+            }
+            aiInput.setSubjects(subjectInsights);
+            
+            aiBased = geminiService.generateSwotAnalysis(aiInput);
+        } catch (Exception e) {
+            // Fallback to null for AI part
+        }
+
+        return new StudentSwotResponse(ruleBased, aiBased);
+    }
+
+    private String inferSubjectFromTopic(String topicName) {
+        String text = String.valueOf(topicName).toLowerCase();
+        if (text.contains("math")) return "Mathematics";
+        if (text.contains("physics")) return "Physics";
+        if (text.contains("chem")) return "Chemistry";
+        if (text.contains("algo") || text.contains("data structure") || text.contains("dbms") || text.contains("os") || text.contains("network")) return "Computer Science";
+        return "General";
     }
 
     private static class UnifiedAttempt {

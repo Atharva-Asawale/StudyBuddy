@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
-import { debtService } from '../services/api';
+import { debtService, studentService } from '../services/api';
 
 const QUIZ_RESULTS_KEY = 'studybuddy_quiz_results';
 
@@ -25,10 +25,9 @@ const sectionLabel = {
 };
 
 const statusConfig = {
-  weak: { label: 'Weak', color: '#ef4444', bg: 'rgba(239,68,68,0.16)', border: 'rgba(239,68,68,0.4)' },
-  average: { label: 'Average', color: '#eab308', bg: 'rgba(234,179,8,0.16)', border: 'rgba(234,179,8,0.4)' },
-  strong: { label: 'Strong', color: '#22c55e', bg: 'rgba(34,197,94,0.16)', border: 'rgba(34,197,94,0.4)' },
-  not_started: { label: 'Not Started', color: '#9ca3af', bg: 'rgba(156,163,175,0.16)', border: 'rgba(156,163,175,0.4)' },
+  strong: { label: 'Strong', color: '#22c55e', bg: 'rgba(34,197,94,0.16)', border: 'rgba(34,197,94,0.4)', description: 'all strong' },
+  fair: { label: 'Fair', color: '#eab308', bg: 'rgba(234,179,8,0.16)', border: 'rgba(234,179,8,0.4)', description: 'fair topics' },
+  weak: { label: 'Weak', color: '#ef4444', bg: 'rgba(239,68,68,0.16)', border: 'rgba(239,68,68,0.4)', description: 'weak' },
 };
 
 const parseNumber = (value) => {
@@ -37,9 +36,9 @@ const parseNumber = (value) => {
 };
 
 const getTopicStatusKey = (score) => {
-  if (score === null) return 'not_started';
+  if (score === null) return null;
   if (score < 50) return 'weak';
-  if (score < 75) return 'average';
+  if (score < 75) return 'fair';
   return 'strong';
 };
 
@@ -63,71 +62,40 @@ const inferSubjectFromTopic = (topicName) => {
   return 'General';
 };
 
-const buildHeatmapTopics = (debtData, quizResults) => {
-  const topicMap = new Map();
-  const weakTopics = Array.isArray(debtData?.weakTopics) ? debtData.weakTopics : [];
+const buildHeatmapTopics = (dashboardData) => {
+  const topics = Array.isArray(dashboardData?.topicPerformance) ? dashboardData.topicPerformance : [];
 
-  weakTopics.forEach((topic, index) => {
-    if (typeof topic === 'string') {
-      topicMap.set(`debt-${topic.toLowerCase()}`, {
-        topicId: null,
-        topicName: topic,
-        subjectName: inferSubjectFromTopic(topic),
-        score: 45,
-      });
-      return;
-    }
+  const processed = topics.map((item) => {
+    const isCustom = item.topic.startsWith('[Custom Test]');
+    const cleanName = isCustom ? item.topic.replace('[Custom Test] ', '') : item.topic;
+    const score = item.score;
+    const statusKey = getTopicStatusKey(score);
 
-    if (topic && typeof topic === 'object') {
-      const topicName = topic.topicName || topic.topic || topic.name || `Topic ${index + 1}`;
-      const score = parseNumber(topic.score);
-      const topicId = topic.topicId || topic.id || null;
-      topicMap.set(String(topicId || topicName).toLowerCase(), {
-        topicId,
-        topicName,
-        subjectName: topic.subjectName || topic.subject || inferSubjectFromTopic(topicName),
-        score: score,
-      });
-    }
-  });
+    if (!statusKey) return null;
 
-  quizResults.forEach((item) => {
-    if (!item || typeof item !== 'object') return;
-
-    const topicId = item.topicId || item.topic?.id || null;
-    const topicName = item.topicName || item.topic?.name || item.topic || 'Untitled Topic';
-    const score = parseNumber(item.score ?? item.percentage);
-    const subjectName = item.subjectName || item.subject || inferSubjectFromTopic(topicName);
-    const key = String(topicId || topicName).toLowerCase();
-    const existing = topicMap.get(key);
-
-    topicMap.set(key, {
-      topicId: existing?.topicId || topicId,
-      topicName: existing?.topicName || topicName,
-      subjectName: existing?.subjectName || subjectName,
-      score: score ?? existing?.score ?? null,
-    });
-  });
-
-  const topics = Array.from(topicMap.values()).map((topic) => {
-    const statusKey = getTopicStatusKey(topic.score ?? null);
     return {
-      ...topic,
+      topicName: cleanName,
+      score: score,
+      isCustom: isCustom,
+      statusKey: statusKey,
       statusLabel: statusConfig[statusKey].label,
       statusColor: statusConfig[statusKey].color,
       bg: statusConfig[statusKey].bg,
       border: statusConfig[statusKey].border,
     };
+  }).filter(Boolean);
+
+  const grouped = {
+    strong: [],
+    fair: [],
+    weak: []
+  };
+
+  processed.forEach(topic => {
+    grouped[topic.statusKey].push(topic);
   });
 
-  const grouped = topics.sort((a, b) => a.topicName.localeCompare(b.topicName)).reduce((acc, topic) => {
-    const key = topic.subjectName || 'General';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(topic);
-    return acc;
-  }, {});
-
-  return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+  return Object.entries(grouped).filter(([_, list]) => list.length > 0);
 };
 
 export default function Performance() {
@@ -143,9 +111,8 @@ export default function Performance() {
     setLoading(true);
     setError('');
     try {
-      const response = await debtService.getGraph();
+      const response = await studentService.getDashboard();
       setDebtData(response.data || null);
-      setQuizResults(readQuizResults());
     } catch {
       setError('Failed to load data. Please refresh.');
     } finally {
@@ -157,20 +124,7 @@ export default function Performance() {
     loadData();
   }, []);
 
-  useEffect(() => {
-    const handleStorage = (event) => {
-      if (!event || event.key === QUIZ_RESULTS_KEY) setQuizResults(readQuizResults());
-    };
-    const handleFocus = () => setQuizResults(readQuizResults());
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
-
-  const groupedHeatmapTopics = useMemo(() => buildHeatmapTopics(debtData, quizResults), [debtData, quizResults]);
+  const groupedHeatmapTopics = useMemo(() => buildHeatmapTopics(debtData), [debtData]);
 
   return (
     <DashboardLayout>
@@ -193,30 +147,41 @@ export default function Performance() {
         ) : (
           <div style={glass}>
             <h3 style={sectionLabel}>Topic Heatmap</h3>
-            {groupedHeatmapTopics.length ? groupedHeatmapTopics.map(([subjectName, topics]) => (
-              <div key={subjectName} style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'rgba(255,255,255,0.86)', marginBottom: '0.75rem' }}>{subjectName}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.65rem' }}>
+            {groupedHeatmapTopics.length ? groupedHeatmapTopics.map(([statusKey, topics]) => (
+              <div key={statusKey} style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 800, color: statusConfig[statusKey].color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>
+                  {statusConfig[statusKey].label}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem', fontWeight: 600 }}>
+                  {statusConfig[statusKey].description}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.85rem' }}>
                   {topics.map((topic) => {
-                    const topicKey = `${topic.topicId || 'topic'}-${topic.topicName}`;
+                    const topicKey = `${topic.isCustom ? 'custom' : 'syllabus'}-${topic.topicName}`;
                     const isHovered = hoveredTopicKey === topicKey;
-                    const canQuiz = Boolean(topic.topicId);
 
                     return (
                       <div key={topicKey} style={{ position: 'relative' }} onMouseEnter={() => setHoveredTopicKey(topicKey)} onMouseLeave={() => setHoveredTopicKey(null)}>
-                        <div style={{ minHeight: '82px', borderRadius: '10px', border: `1px solid ${topic.border}`, background: topic.bg, padding: '0.58rem' }}>
-                          <div style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 700, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.35rem' }} title={topic.topicName}>{topic.topicName}</div>
-                          <div style={{ fontSize: '0.82rem', color: topic.statusColor, fontWeight: 700 }}>{topic.score === null ? 'Not attempted' : Math.round(topic.score)}</div>
+                        <div style={{ minHeight: '90px', borderRadius: '12px', border: `1px solid ${topic.border}`, background: topic.bg, padding: '0.8rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                          <div style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.35rem' }} title={topic.topicName}>
+                            {topic.topicName}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                            <div style={{ fontSize: '0.9rem', color: topic.statusColor, fontWeight: 800 }}>{Math.round(topic.score)}%</div>
+                            {topic.isCustom && (
+                              <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', background: 'rgba(129,140,248,0.1)', border: '1px solid rgba(129,140,248,0.3)', borderRadius: '4px', color: '#818cf8', fontWeight: 600 }}>CUSTOM</span>
+                            )}
+                          </div>
                         </div>
 
                         {isHovered && (
-                          <div style={{ position: 'absolute', zIndex: 30, left: '0', top: '100%', marginTop: '0.42rem', width: '240px', background: 'rgba(5,10,22,0.96)', border: '1px solid rgba(56,189,248,0.35)', borderRadius: '10px', padding: '0.65rem', boxShadow: '0 10px 25px rgba(0,0,0,0.35)' }}>
-                            <div style={{ color: '#e2e8f0', fontWeight: 700, marginBottom: '0.35rem', fontSize: '0.84rem' }}>{topic.topicName}</div>
-                            <div style={{ color: 'rgba(226,232,240,0.88)', fontSize: '0.8rem', marginBottom: '0.2rem' }}>Score: {topic.score === null ? 'Not attempted' : Math.round(topic.score)}</div>
-                            <div style={{ color: topic.statusColor, fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.55rem' }}>Status: {topic.statusLabel}</div>
-                            <button disabled={!canQuiz} onClick={() => canQuiz && navigate(`/quiz/${topic.topicId}/${encodeURIComponent(topic.topicName)}`)} style={{ width: '100%', padding: '0.46rem 0.55rem', borderRadius: '8px', border: canQuiz ? 'none' : '1px solid rgba(255,255,255,0.2)', background: canQuiz ? 'linear-gradient(135deg, #38bdf8, #22d3ee)' : 'rgba(255,255,255,0.06)', color: canQuiz ? '#032024' : 'rgba(255,255,255,0.5)', fontWeight: 800, cursor: canQuiz ? 'pointer' : 'not-allowed' }}>
-                              Take Quiz ?
-                            </button>
+                          <div style={{ position: 'absolute', zIndex: 30, left: '50%', transform: 'translateX(-50%)', top: '100%', marginTop: '0.5rem', width: '220px', background: 'rgba(5,10,22,0.98)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: '12px', padding: '0.8rem', boxShadow: '0 12px 30px rgba(0,0,0,0.5)' }}>
+                            <div style={{ color: 'white', fontWeight: 700, marginBottom: '0.4rem', fontSize: '0.85rem' }}>{topic.topicName}</div>
+                            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', marginBottom: '0.2rem' }}>Accuracy: {Math.round(topic.score)}%</div>
+                            <div style={{ color: topic.statusColor, fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.8rem' }}>Status: {topic.statusLabel}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+                              Performance is tracked across all {topic.isCustom ? 'custom' : 'syllabus'} attempts.
+                            </div>
                           </div>
                         )}
                       </div>
@@ -224,17 +189,12 @@ export default function Performance() {
                   })}
                 </div>
               </div>
-            )) : <div style={{ color: 'rgba(255,255,255,0.75)' }}>No topic performance data available yet.</div>}
+            )) : <div style={{ color: 'rgba(255,255,255,0.6)', textAlign: 'center', padding: '2rem' }}>No attempted topics yet. Take a quiz to see your performance heatmap!</div>}
 
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1.5rem', justifyContent: 'center' }}>
-              {[
-                { label: 'Weak - at risk', key: 'weak' },
-                { label: 'Average - needs work', key: 'average' },
-                { label: 'Strong - mastered', key: 'strong' },
-                { label: 'Not started', key: 'not_started' },
-              ].map((item) => (
-                <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#000000', fontSize: '0.8rem', fontWeight: 600 }}>
-                  <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: statusConfig[item.key].color, display: 'inline-block' }} />
+            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '2rem', justifyContent: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+              {Object.entries(statusConfig).map(([key, item]) => (
+                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'white', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, boxShadow: `0 0 10px ${item.color}` }} />
                   {item.label}
                 </div>
               ))}

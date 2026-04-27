@@ -31,9 +31,12 @@ public class QuizController {
     public ResponseEntity<List<QuizQuestionDTO>> generateQuiz(
             @AuthenticationPrincipal String email,
             @PathVariable UUID topicId,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "easyCount", defaultValue = "5") int easyCount,
+            @RequestParam(value = "mediumCount", defaultValue = "3") int mediumCount,
+            @RequestParam(value = "hardCount", defaultValue = "2") int hardCount) {
         try {
-            List<QuizQuestionDTO> questions = quizService.generateQuiz(topicId, file);
+            List<QuizQuestionDTO> questions = quizService.generateQuiz(topicId, file, easyCount, mediumCount, hardCount);
 
             // Cache questions for this user+topic
             String cacheKey = email + ":" + topicId;
@@ -45,6 +48,8 @@ public class QuizController {
                 dto.setQuestion(q.getQuestion());
                 dto.setOptions(q.getOptions());
                 dto.setCorrectIndex(-1); // hide answer
+                dto.setDifficulty(q.getDifficulty());
+                dto.setExplanation(null); // hide explanation until result
                 return dto;
             }).toList();
 

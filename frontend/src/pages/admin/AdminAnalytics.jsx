@@ -11,12 +11,8 @@ import { adminService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const AnalyticCard = ({ title, value, subtext, icon: Icon, color }) => (
-  <div className="glass-card" style={{ 
-    background: 'rgba(5, 5, 20, 0.6)', 
-    backdropFilter: 'blur(12px)',
-    borderRadius: '16px', 
-    padding: '1.5rem', 
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+  <div className="glass-panel" style={{ 
+    background: 'var(--card-bg)', 
     display: 'flex',
     flexDirection: 'column',
     gap: '0.5rem'
@@ -120,7 +116,7 @@ export default function AdminAnalytics() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
         {/* CGPA Distribution */}
-        <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+        <div className="glass-panel" style={{ background: 'var(--card-bg)' }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <BarChart2 size={18} color="#818cf8" /> CGPA Distribution
           </h3>
@@ -142,7 +138,7 @@ export default function AdminAnalytics() {
         </div>
 
         {/* Engagement Summary */}
-        <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+        <div className="glass-panel" style={{ background: 'var(--card-bg)' }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <PieIcon size={18} color="#c084fc" /> Branch Engagement
           </h3>
@@ -170,7 +166,7 @@ export default function AdminAnalytics() {
       </div>
 
       {/* Weak Topics Heatmap Table */}
-      <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+      <div className="glass-panel" style={{ background: 'var(--card-bg)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem', textAlign: 'center' }}>
           <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Subject Weakness Heatmap</h3>
           <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>Top 15 most frequent weak topics</span>

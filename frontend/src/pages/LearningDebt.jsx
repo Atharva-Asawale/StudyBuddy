@@ -1,18 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { debtService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { ReactFlow, Controls, Background, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Sparkles, BookOpen, AlertTriangle, ArrowRight } from 'lucide-react';
-
-const glassMorphism = {
-  background: 'rgba(15, 15, 40, 0.6)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '16px',
-};
+import { Sparkles, BookOpen, AlertTriangle } from 'lucide-react';
+import GameLoader from '../components/GameLoader';
 
 export default function LearningDebt() {
   const { cachedDebtData, cacheDebtData } = useAuth();
@@ -74,13 +68,16 @@ export default function LearningDebt() {
           position: { x: 50, y: yOffset },
           data: { label: weakTopic.name, ...weakTopic, isWeak: true },
           style: {
-            background: 'rgba(239, 68, 68, 0.15)',
-            color: '#fca5a5',
-            border: '2px solid #ef4444',
-            borderRadius: '8px',
+            background: 'rgba(255, 23, 68, 0.1)',
+            color: 'var(--neon-red)',
+            border: '2px solid var(--neon-red)',
+            borderRadius: '4px',
             padding: '12px',
-            fontWeight: '600',
-            width: 200,
+            fontWeight: '800',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            width: 220,
+            boxShadow: '0 0 15px rgba(255, 23, 68, 0.2)'
           }
         });
         nodeSet.add(weakTopic.id);
@@ -91,18 +88,22 @@ export default function LearningDebt() {
       if (weakTopic.affects) {
         weakTopic.affects.forEach((affect, idx2) => {
           if (!nodeSet.has(affect.id)) {
+            const isAI = affect.source === 'ai';
             initialNodes.push({
               id: affect.id,
-              position: { x: 400, y: childYOffset },
+              position: { x: 450, y: childYOffset },
               data: { label: affect.name, ...affect, isAffected: true },
               style: {
-                background: affect.source === 'ai' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                color: affect.source === 'ai' ? '#fcd34d' : '#93c5fd',
-                border: affect.source === 'ai' ? '2px solid #f59e0b' : '2px solid #3b82f6',
-                borderRadius: '8px',
+                background: isAI ? 'rgba(255, 171, 0, 0.1)' : 'rgba(0, 240, 255, 0.1)',
+                color: isAI ? 'var(--neon-gold)' : 'var(--neon-cyan)',
+                border: `2px solid ${isAI ? 'var(--neon-gold)' : 'var(--neon-cyan)'}`,
+                borderRadius: '4px',
                 padding: '12px',
-                fontWeight: '600',
-                width: 200,
+                fontWeight: '800',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+                width: 220,
+                boxShadow: isAI ? '0 0 15px rgba(255, 171, 0, 0.2)' : '0 0 15px rgba(0, 240, 255, 0.2)'
               }
             });
             nodeSet.add(affect.id);
@@ -113,18 +114,19 @@ export default function LearningDebt() {
             source: weakTopic.id,
             target: affect.id,
             animated: true,
-            label: affect.source === 'ai' ? 'AI Identified' : 'Rules Base',
-            style: { stroke: affect.source === 'ai' ? '#f59e0b' : '#3b82f6', strokeWidth: 2 },
+            label: affect.source === 'ai' ? 'AI ANALYSIS' : 'SYSTEM RULE',
+            labelStyle: { fill: 'var(--text-muted)', fontSize: 8, fontWeight: 800, fontFamily: 'var(--font-mono)' },
+            style: { stroke: affect.source === 'ai' ? 'var(--neon-gold)' : 'var(--neon-cyan)', strokeWidth: 2 },
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: affect.source === 'ai' ? '#f59e0b' : '#3b82f6',
+              color: affect.source === 'ai' ? 'var(--neon-gold)' : 'var(--neon-cyan)',
             },
           });
           
-          childYOffset += 80;
+          childYOffset += 100;
         });
       }
-      yOffset += Math.max((weakTopic.affects ? weakTopic.affects.length * 80 : 80), 100);
+      yOffset += Math.max((weakTopic.affects ? weakTopic.affects.length * 100 : 100), 120);
     });
 
     setNodes(initialNodes);
@@ -135,53 +137,34 @@ export default function LearningDebt() {
     setSelectedNodeData(node.data);
   }, []);
 
+  if (loading) return <GameLoader message="LOADING DEBT MAP..." subMessage="ANALYZING TOPICS" />;
+
   return (
     <DashboardLayout>
-      <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-        <div style={{ textAlign: 'center', width: '100%' }}>
-          <h2 style={{
-            fontSize: '1.8rem', fontWeight: 700,
-            color: 'white', letterSpacing: '-0.02em',
-            marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem',
-            justifyContent: 'center'
-          }}>
-            <AlertTriangle size={26} color="#fca5a5" /> Learning Debt Graph
-          </h2>
-          <p style={{ color: '#000000', fontSize: '0.95rem', fontWeight: 600 }}>
-            Map your weak areas to syllabus concepts they impact
-          </p>
-        </div>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
-        <button
-          onClick={handleRegenerate}
-          disabled={loading || regenerating}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            padding: '0.75rem 1.25rem',
-            borderRadius: '12px',
-            border: '1px solid rgba(245, 158, 11, 0.4)',
-            background: 'linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05))',
-            color: '#fcd34d',
-            fontWeight: 600,
-            cursor: loading || regenerating ? 'not-allowed' : 'pointer',
-            opacity: loading || regenerating ? 0.6 : 1,
-            boxShadow: '0 0 15px rgba(245, 158, 11, 0.2)',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Sparkles size={18} />
-          {regenerating ? 'Analyzing with AI...' : 'AI Analysis'}
-        </button>
-      </div>
+      <div className="page-enter" style={{ height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
+        <header style={{ marginBottom: '2rem', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '2.4rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>LEARNING DEBT MAP</h1>
+          <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-red)', fontSize: '11px', letterSpacing: '0.2em' }}>
+            TOPIC DEPENDENCY REPORT
+          </div>
+        </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedNodeData ? '1fr 340px' : '1fr', gap: '1.25rem', height: 'calc(100vh - 180px)' }}>
-        
-        {/* Graph Area */}
-        <div style={{ ...glassMorphism, overflow: 'hidden', position: 'relative' }}>
-          {loading ? (
-             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#000000', fontWeight: 600 }}>Loading your graph...</div>
-          ) : (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+          <button
+            onClick={handleRegenerate}
+            disabled={regenerating}
+            className="btn-secondary"
+            style={{ minWidth: '240px', padding: '12px 24px', borderColor: 'var(--neon-gold)', color: 'var(--neon-gold)' }}
+          >
+            <Sparkles size={16} style={{ marginRight: '8px' }} />
+            {regenerating ? 'RE-CALCULATING...' : 'RUN AI ANALYSIS'}
+          </button>
+        </div>
+
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: selectedNodeData ? '1fr 360px' : '1fr', gap: '1.5rem', minHeight: 0 }}>
+          
+          {/* Graph Area */}
+          <div className="glass-panel" style={{ overflow: 'hidden', position: 'relative', padding: 0 }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -191,96 +174,66 @@ export default function LearningDebt() {
               fitView
               colorMode="dark"
             >
-              <Background color="#ffffff" gap={16} size={1} opacity={0.05} />
-              <Controls style={{ background: 'rgba(15,15,40,0.8)', border: '1px solid rgba(255,255,255,0.1)' }} />
+              <Background color="var(--neon-cyan)" gap={20} size={1} opacity={0.05} />
+              <Controls style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} />
             </ReactFlow>
+          </div>
+
+          {/* Side Panel */}
+          {selectedNodeData && (
+            <div className="glass-panel card-animate" style={{ display: 'flex', flexDirection: 'column', padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+                <div style={{
+                  padding: '4px 12px', borderRadius: '4px', fontSize: '9px', fontWeight: 800,
+                  background: selectedNodeData.isWeak ? 'rgba(255,23,68,0.1)' : 'rgba(0,240,255,0.1)',
+                  color: selectedNodeData.isWeak ? 'var(--neon-red)' : 'var(--neon-cyan)',
+                  border: `1px solid ${selectedNodeData.isWeak ? 'var(--neon-red)' : 'var(--neon-cyan)'}`,
+                  fontFamily: 'var(--font-mono)'
+                }}>
+                  {selectedNodeData.isWeak ? 'WEAK TOPIC' : 'AFFECTED TOPIC'}
+                </div>
+                <button onClick={() => setSelectedNodeData(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}>
+                  ✕
+                </button>
+              </div>
+
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem', fontFamily: 'var(--font-display)', lineHeight: 1.2 }}>
+                {selectedNodeData.label.toUpperCase()}
+              </h3>
+
+              {selectedNodeData.isWeak && (
+                <div style={{ marginBottom: '2rem', padding: '1rem', background: 'rgba(255,23,68,0.05)', borderRadius: '4px', borderLeft: '3px solid var(--neon-red)' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', fontFamily: 'var(--font-mono)' }}>SCORE</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--neon-red)', fontFamily: 'var(--font-mono)' }}>
+                    {selectedNodeData.score}%
+                  </div>
+                </div>
+              )}
+
+              {selectedNodeData.isAffected && selectedNodeData.reason && (
+                 <div style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '2rem' }}>
+                   <div style={{ fontSize: '10px', color: 'var(--neon-cyan)', textTransform: 'uppercase', marginBottom: '8px', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
+                     DEPENDENCY REASON
+                   </div>
+                   <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                     {selectedNodeData.reason}
+                   </p>
+                 </div>
+              )}
+
+              <div style={{ marginTop: 'auto' }}>
+                <button
+                  onClick={() => navigate(`/quiz/${selectedNodeData.id}/${encodeURIComponent(selectedNodeData.label)}`)}
+                  className="btn-primary"
+                  style={{ width: '100%', padding: '1rem' }}
+                >
+                  <BookOpen size={16} style={{ marginRight: '8px' }} />
+                  START QUIZ
+                </button>
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Side Panel */}
-        {selectedNodeData && (
-          <div style={{
-            ...glassMorphism,
-            display: 'flex', flexDirection: 'column',
-            animation: 'slideIn 0.3s ease-out forwards',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-              <div style={{
-                padding: '0.4rem 0.75rem',
-                borderRadius: '20px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                background: selectedNodeData.isWeak ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                color: selectedNodeData.isWeak ? '#fca5a5' : '#93c5fd',
-                border: selectedNodeData.isWeak ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)'
-              }}>
-                {selectedNodeData.isWeak ? 'Weak Domain' : 'Affected Topic'}
-              </div>
-              <button onClick={() => setSelectedNodeData(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.2rem' }}>
-                ✕
-              </button>
-            </div>
-
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'white', marginBottom: '0.75rem', lineHeight: 1.2 }}>
-              {selectedNodeData.label}
-            </h3>
-
-            {selectedNodeData.isWeak && (
-              <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Score</span>
-                  <span style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fca5a5' }}>
-                    {selectedNodeData.score}%
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {selectedNodeData.isAffected && selectedNodeData.reason && (
-               <div style={{
-                 padding: '1rem', background: 'rgba(255,255,255,0.03)',
-                 borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)',
-                 marginBottom: '1.5rem'
-               }}>
-                 <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>
-                   Why this depends
-                 </span>
-                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.6 }}>
-                   {selectedNodeData.reason}
-                 </p>
-               </div>
-            )}
-
-            <div style={{ marginTop: 'auto', paddingTop: '1.5rem' }}>
-              <button
-                onClick={() => navigate(`/quiz/${selectedNodeData.id}/${encodeURIComponent(selectedNodeData.label)}`)}
-                style={{
-                  width: '100%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  background: '#6366f1',
-                  color: 'white',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s',
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = '#4f46e5'}
-                onMouseOut={(e) => e.currentTarget.style.background = '#6366f1'}
-              >
-                <BookOpen size={18} />
-                Take Master Quiz
-              </button>
-            </div>
-            <style>{`
-              @keyframes slideIn {
-                from { opacity: 0; transform: translateX(20px); }
-                to { opacity: 1; transform: translateX(0); }
-              }
-            `}</style>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );

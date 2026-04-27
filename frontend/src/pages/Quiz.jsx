@@ -2,16 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { quizService } from '../services/api';
-
+import GameLoader from '../components/GameLoader';
+import CountUp from '../components/CountUp';
+import CyberNotification from '../components/CyberNotification';
 import { CheckCircle, Plus, Minus, Sparkles, ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
-
-const glass = {
-  background: 'rgba(15,15,40,0.6)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '16px',
-  padding: '1.5rem',
-};
 
 export default function Quiz() {
   const { topicId, topicName } = useParams();
@@ -27,6 +21,7 @@ export default function Quiz() {
   const [file, setFile] = useState(null);
   const [counts, setCounts] = useState({ easy: 5, medium: 3, hard: 2 });
   const [started, setStarted] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
 
   const updateCount = (type, delta) => {
     const total = counts.easy + counts.medium + counts.hard;
@@ -38,10 +33,6 @@ export default function Quiz() {
   };
 
   const totalQuestions = counts.easy + counts.medium + counts.hard;
-
-  useEffect(() => {
-    // We wait for user to click "Start"
-  }, [topicId]);
 
   const fetchQuiz = async () => {
     if (totalQuestions < 3 || totalQuestions > 20) return;
@@ -59,7 +50,7 @@ export default function Quiz() {
   };
 
   const handleSelect = (questionIndex, optionIndex) => {
-    if (result) return; // don't allow changes after submit
+    if (result) return;
     setSelected({ ...selected, [questionIndex]: optionIndex });
   };
 
@@ -77,6 +68,7 @@ export default function Quiz() {
       });
       setResult(res.data);
       setCurrent(0);
+      setShowNotification(true);
 
       const existing = (() => {
         try {
@@ -106,166 +98,88 @@ export default function Quiz() {
 
   const decodedName = decodeURIComponent(topicName || 'Topic');
 
-  // ─── Loading ───────────────────────────────────────────
-  if (loading) {
-    return (
-      <DashboardLayout noSidebar={true}>
-        <div style={{
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          minHeight: '80vh', gap: '1rem', textAlign: 'center'
-        }}>
-          <div style={{
-            width: '48px', height: '48px', borderRadius: '50%',
-            border: '3px solid rgba(129,140,248,0.2)',
-            borderTop: '3px solid #818cf8',
-            animation: 'spin 1s linear infinite',
-          }} />
-          <p style={{ color: 'white', fontSize: '1.2rem', fontWeight: 600 }}>
-            {file ? "Analyzing Document..." : "Generating Questions..."}
-          </p>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
-            AI is crafting {totalQuestions} questions for <strong style={{ color: '#818cf8' }}>{decodedName}</strong>
-          </p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  if (loading) return <GameLoader message={file ? "PROCESSING FILE..." : "GENERATING QUIZ..."} subMessage={`PREPARING ${totalQuestions} QUESTIONS FOR ${decodedName.toUpperCase()}`} />;
+  
+  if (submitting) return <GameLoader message="CHECKING ANSWERS..." subMessage="CALCULATING SCORE" />;
 
   // ─── Prepare Screen ────────────────────────────────────
   if (!started && !result) {
     return (
       <DashboardLayout noSidebar={true}>
-        <div style={{ maxWidth: '600px', margin: '4rem auto', ...glass, textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>🎯</div>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'white' }}>
-            Ready for your Quiz?
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '2rem' }}>
-            Topic: <span style={{ color: '#818cf8', fontWeight: 600 }}>{decodedName}</span>
-          </p>
-
-          <div style={{
-            background: 'rgba(129,140,248,0.05)',
-            border: '1px dashed rgba(129,140,248,0.3)',
-            borderRadius: '12px', padding: '1.5rem',
-            marginBottom: '1.5rem'
-          }}>
-            <p style={{ fontSize: '0.9rem', color: '#818cf8', fontWeight: 600, marginBottom: '0.5rem' }}>
-              Want more precise questions?
-            </p>
-            <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem' }}>
-              Upload your PDF notes and the AI will test you strictly on your material.
-            </p>
+        <div className="page-enter" style={{ maxWidth: '700px', margin: '4rem auto' }}>
+          <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: -20, left: '50%', transform: 'translateX(-50%)', background: 'var(--neon-pink)', color: 'white', padding: '4px 20px', borderRadius: '4px', fontSize: '10px', fontWeight: 800, letterSpacing: '0.2em' }}>QUIZ SETTINGS</div>
             
-            <input 
-              type="file" 
-              id="rag-file" 
-              accept=".pdf,.docx" 
-              onChange={(e) => setFile(e.target.files[0])}
-              style={{ display: 'none' }}
-            />
-            <label htmlFor="rag-file" style={{
-              display: 'inline-block', padding: '0.6rem 1.25rem',
-              background: file ? 'rgba(110,231,183,0.1)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${file ? '#6ee7b7' : 'rgba(255,255,255,0.1)'}`,
-              borderRadius: '8px', cursor: 'pointer',
-              color: file ? '#6ee7b7' : 'white', fontSize: '0.85rem',
-              fontWeight: 600, transition: 'all 0.2s'
+            <h2 style={{ fontSize: '2.4rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>QUIZ</h2>
+            <p style={{ color: 'var(--neon-cyan)', fontFamily: 'var(--font-mono)', fontSize: '14px', letterSpacing: '0.1em', marginBottom: '2rem' }}>
+              TOPIC: {decodedName.toUpperCase()}
+            </p>
+
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: '12px', padding: '2rem',
+              marginBottom: '2rem'
             }}>
-              {file ? `✅ ${file.name}` : '📁 Upload Notes (Optional)'}
-            </label>
-            {file && (
-              <button onClick={() => setFile(null)} style={{
-                marginLeft: '0.5rem', background: 'transparent', border: 'none',
-                color: '#fca5a5', cursor: 'pointer', fontSize: '0.8rem'
-              }}>Remove</button>
-            )}
-          </div>
-
-          {/* Difficulty Selectors */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '2rem', textAlign: 'left' }}>
-            <h4 style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Set Difficulty Breakdown</h4>
-            {[
-              { id: 'easy', label: 'Easy', color: '#6ee7b7', icon: '🟢' },
-              { id: 'medium', label: 'Medium', color: '#fcd34d', icon: '🟡' },
-              { id: 'hard', label: 'Hard', color: '#f87171', icon: '🔴' }
-            ].map((diff) => (
-              <div key={diff.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1rem', borderRadius: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span>{diff.icon}</span>
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{diff.label}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <button 
-                    onClick={() => updateCount(diff.id, -1)}
-                    style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', width: '28px', height: '28px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span style={{ minWidth: '20px', textAlign: 'center', fontWeight: 700 }}>{counts[diff.id]}</span>
-                  <button 
-                    onClick={() => updateCount(diff.id, 1)}
-                    disabled={totalQuestions >= 20}
-                    style={{ 
-                      background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', width: '28px', height: '28px', 
-                      color: totalQuestions >= 20 ? 'rgba(255,255,255,0.1)' : 'white', cursor: totalQuestions >= 20 ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-            <div style={{ textAlign: 'center', fontSize: '0.9rem', fontWeight: 700, color: totalQuestions > 20 ? '#f87171' : '#6ee7b7', marginTop: '0.5rem' }}>
-              Total Questions: {totalQuestions} / 20
+              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: '1rem' }}>UPLOAD STUDY MATERIAL (OPTIONAL)</p>
+              
+              <input 
+                type="file" 
+                id="rag-file" 
+                accept=".pdf,.docx" 
+                onChange={(e) => setFile(e.target.files[0])}
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="rag-file" className="btn-secondary" style={{ display: 'inline-block', minWidth: '280px' }}>
+                {file ? `FILE LOADED: ${file.name.toUpperCase()}` : '📁 SELECT PDF/DOCX SOURCE'}
+              </label>
+              {file && (
+                <button onClick={() => setFile(null)} style={{
+                  display: 'block', margin: '1rem auto 0', background: 'transparent', border: 'none',
+                  color: 'var(--neon-red)', cursor: 'pointer', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em'
+                }}>REMOVE FILE</button>
+              )}
             </div>
+
+            <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
+              <h4 style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1rem' }}>DIFFICULTY DISTRIBUTION</h4>
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
+                {[
+                  { id: 'easy', label: 'EASY', color: 'var(--neon-green)' },
+                  { id: 'medium', label: 'MEDIUM', color: 'var(--neon-gold)' },
+                  { id: 'hard', label: 'HARD', color: 'var(--neon-red)' }
+                ].map((diff) => (
+                  <div key={diff.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: `1px solid ${diff.color}22` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: diff.color, boxShadow: `0 0 10px ${diff.color}` }}></div>
+                      <span style={{ fontWeight: 700, fontSize: '11px', color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>{diff.label}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
+                      <button onClick={() => updateCount(diff.id, -1)} className="btn-ghost" style={{ padding: '4px 10px', fontSize: '14px' }}>-</button>
+                      <span style={{ minWidth: '24px', textAlign: 'center', fontWeight: 700, fontFamily: 'var(--font-mono)', color: diff.color, fontSize: '18px' }}>{counts[diff.id]}</span>
+                      <button onClick={() => updateCount(diff.id, 1)} disabled={totalQuestions >= 20} className="btn-ghost" style={{ padding: '4px 10px', fontSize: '14px' }}>+</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: 700, color: totalQuestions > 20 ? 'var(--neon-red)' : 'var(--neon-cyan)', marginTop: '1.5rem', fontFamily: 'var(--font-mono)' }}>
+                TOTAL QUESTIONS: {totalQuestions} / 20
+              </div>
+            </div>
+
+            <button 
+              onClick={fetchQuiz} 
+              disabled={totalQuestions < 3 || totalQuestions > 20}
+              className="btn-primary"
+              style={{ width: '100%', padding: '1.2rem' }}
+            >
+              START QUIZ →
+            </button>
+            
+            <button onClick={() => navigate('/syllabus')} className="btn-ghost" style={{ marginTop: '1.5rem', width: '100%' }}>
+              CANCEL
+            </button>
           </div>
-
-          <button 
-            onClick={fetchQuiz} 
-            disabled={totalQuestions < 3 || totalQuestions > 20}
-            style={{
-              width: '100%', padding: '1rem',
-              background: (totalQuestions < 3 || totalQuestions > 20) ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #818cf8, #c084fc)',
-              border: 'none', borderRadius: '12px',
-              color: 'white', fontWeight: 700, fontSize: '1rem',
-              cursor: (totalQuestions < 3 || totalQuestions > 20) ? 'not-allowed' : 'pointer', transition: 'transform 0.2s'
-            }}
-            onMouseOver={e => { if (totalQuestions >= 3 && totalQuestions <= 20) e.currentTarget.style.transform = 'translateY(-2px)'; }}
-            onMouseOut={e => { if (totalQuestions >= 3 && totalQuestions <= 20) e.currentTarget.style.transform = 'translateY(0)'; }}
-          >
-            Start Quiz →
-          </button>
-          
-          <button onClick={() => navigate('/syllabus')} style={{
-            marginTop: '1rem', background: 'transparent', border: 'none',
-            color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '0.85rem'
-          }}>
-            Cancel and Go Back
-          </button>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // ─── Error ─────────────────────────────────────────────
-  if (error) {
-    return (
-      <DashboardLayout noSidebar={true}>
-        <div style={{ ...glass, textAlign: 'center', padding: '3rem', maxWidth: '600px', margin: '0 auto' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
-          <p style={{ color: '#fca5a5', marginBottom: '1.5rem' }}>{error}</p>
-          <button onClick={fetchQuiz} style={{
-            padding: '0.75rem 2rem',
-            background: 'linear-gradient(135deg, #818cf8, #c084fc)',
-            border: 'none', borderRadius: '10px',
-            color: 'white', fontWeight: 700, cursor: 'pointer',
-          }}>
-            Try Again
-          </button>
         </div>
       </DashboardLayout>
     );
@@ -274,107 +188,79 @@ export default function Quiz() {
   // ─── Result Screen ─────────────────────────────────────
   if (result) {
     const pct = Math.round(result.percentage);
-    const color = pct >= 70 ? '#6ee7b7' : pct >= 50 ? '#fde68a' : '#fca5a5';
+    const color = pct >= 70 ? 'var(--neon-green)' : pct >= 50 ? 'var(--neon-gold)' : 'var(--neon-red)' ;
 
     return (
       <DashboardLayout noSidebar={true}>
-        <div style={{ maxWidth: '1100px', width: '100%', margin: '0 auto' }}>
+        {showNotification && (
+          <CyberNotification 
+            message="QUIZ COMPLETED" 
+            subMessage={`SCORE: ${pct}%`}
+            type={pct >= 70 ? "success" : pct >= 40 ? "warning" : "danger"}
+            onComplete={() => setShowNotification(false)}
+          />
+        )}
+        <div className="page-enter" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div className="glass-panel" style={{ textAlign: 'center', marginBottom: '2rem', padding: '3rem', borderTop: `4px solid ${color}` }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '1rem', letterSpacing: '0.3em' }}>QUIZ SUMMARY</div>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: '2rem' }}>{decodedName.toUpperCase()}</h2>
+            
+            <div style={{ fontSize: '6rem', fontWeight: 800, color, lineHeight: 1, marginBottom: '0.5rem', textShadow: `0 0 30px ${color}44` }}>
+              <CountUp end={pct} suffix="%" />
+            </div>
+            
+            <div style={{ fontSize: '14px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', marginBottom: '2rem' }}>
+              PERFORMANCE: {result.score} / {result.total} QUESTIONS CORRECT
+            </div>
 
-          {/* Score Card */}
-          <div style={{
-            ...glass,
-            textAlign: 'center',
-            marginBottom: '1.5rem',
-            background: 'rgba(129,140,248,0.08)',
-            borderColor: 'rgba(129,140,248,0.2)',
-          }}>
-            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Quiz Complete
-            </div>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem' }}>
-              {decodedName}
-            </h2>
-            <div style={{ fontSize: '5rem', fontWeight: 700, color, lineHeight: 1, marginBottom: '0.5rem' }}>
-              {pct}%
-            </div>
-            <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)', marginBottom: '1rem' }}>
-              {result.score} / {result.total} correct
-            </div>
             <div style={{
-              display: 'inline-block',
-              padding: '0.5rem 1.25rem',
-              background: result.mastered ? 'rgba(110,231,183,0.15)' : 'rgba(252,165,165,0.15)',
-              border: `1px solid ${result.mastered ? 'rgba(110,231,183,0.3)' : 'rgba(252,165,165,0.3)'}`,
-              borderRadius: '999px',
-              color: result.mastered ? '#6ee7b7' : '#fca5a5',
-              fontSize: '0.85rem', fontWeight: 600,
-              marginBottom: '1rem',
+              display: 'inline-block', padding: '10px 30px',
+              background: 'rgba(255,255,255,0.03)', border: `1px solid ${color}`,
+              borderRadius: '4px', color: color, fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '2rem'
             }}>
-              {result.mastered ? '✅ Topic Mastered!' : '📚 Keep Practicing'}
+              {result.mastered ? 'STATUS: TOPIC MASTERED' : 'STATUS: REVIEW RECOMMENDED'}
             </div>
-            <p style={{ color: 'white', fontSize: '0.9rem' }}>
-              {result.feedback}
+            
+            <p style={{ color: 'var(--text-primary)', fontSize: '1.1rem', maxWidth: '700px', margin: '0 auto', lineHeight: 1.6 }}>
+              {result.feedback.toUpperCase()}
             </p>
           </div>
 
-          {/* Review Answers */}
-          <div style={{ ...glass, marginBottom: '1.5rem' }}>
-            <h3 style={{
-              fontSize: '0.9rem', fontWeight: 600,
-              color: 'rgba(255,255,255,0.4)',
-              textTransform: 'uppercase', letterSpacing: '0.08em',
-              marginBottom: '1.25rem', textAlign: 'center'
-            }}>
-              Answer Review
-            </h3>
+          <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
+            <h3 style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '2rem', textAlign: 'center' }}>ANSWERS REVIEW</h3>
             {result.questions.map((q, qi) => {
               const userAnswer = result.selectedAnswers[qi];
               const correct = q.correctIndex;
               const isCorrect = userAnswer === correct;
               return (
-                <div key={qi} style={{
-                  marginBottom: '1.25rem',
-                  paddingBottom: '1.25rem',
-                  borderBottom: qi < result.questions.length - 1
-                    ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                }}>
-                  <p style={{
-                    fontSize: '0.9rem', fontWeight: 600,
-                    marginBottom: '0.75rem', color: 'white',
-                  }}>
-                    {qi + 1}. {q.question}
+                <div key={qi} style={{ marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>
+                    <span style={{ color: 'var(--text-muted)', marginRight: '1rem' }}>{String(qi + 1).padStart(2, '0')}</span> {q.question}
                   </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                     {q.options.map((opt, oi) => {
                       const isCorrectOpt = oi === correct;
                       const isUserOpt = oi === userAnswer;
-                      let bg = 'rgba(255,255,255,0.03)';
-                      let border = 'rgba(255,255,255,0.06)';
-                      let color = 'rgba(255,255,255,0.6)';
-                      if (isCorrectOpt) { bg = 'rgba(110,231,183,0.15)'; border = 'rgba(110,231,183,0.4)'; color = '#6ee7b7'; }
-                      if (isUserOpt && !isCorrect) { bg = 'rgba(252,165,165,0.15)'; border = 'rgba(252,165,165,0.4)'; color = '#fca5a5'; }
+                      let borderColor = 'rgba(255,255,255,0.1)';
+                      let bgColor = 'rgba(255,255,255,0.02)';
+                      let textColor = 'var(--text-secondary)';
+                      
+                      if (isCorrectOpt) { borderColor = 'var(--neon-green)'; bgColor = 'rgba(0,255,100,0.05)'; textColor = 'var(--neon-green)'; }
+                      else if (isUserOpt) { borderColor = 'var(--neon-red)'; bgColor = 'rgba(255,23,68,0.05)'; textColor = 'var(--neon-red)'; }
+
                       return (
-                        <div key={oi} style={{
-                          padding: '0.5rem 0.85rem',
-                          background: bg, border: `1px solid ${border}`,
-                          borderRadius: '8px', color,
-                          fontSize: '0.85rem',
-                          display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        }}>
-                          <span>{isCorrectOpt ? '✓' : isUserOpt ? '✗' : '○'}</span>
+                        <div key={oi} style={{ padding: '1rem', background: bgColor, border: `1px solid ${borderColor}`, borderRadius: '8px', color: textColor, fontSize: '13px', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 800 }}>
+                            {isCorrectOpt ? '✓' : isUserOpt ? '✗' : ''}
+                          </div>
                           {opt}
                         </div>
                       );
                     })}
                   </div>
                   {q.explanation && (
-                    <div style={{
-                      marginTop: '0.75rem', padding: '0.75rem',
-                      background: 'rgba(129,140,248,0.05)', borderRadius: '8px',
-                      borderLeft: '3px solid #818cf8', fontSize: '0.8rem',
-                      color: 'rgba(255,255,255,0.7)', lineHeight: 1.4
-                    }}>
-                      <strong style={{ color: '#818cf8', display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Explanation</strong>
+                    <div style={{ marginTop: '1.5rem', padding: '1.2rem', background: 'rgba(0,240,255,0.03)', borderLeft: '3px solid var(--neon-cyan)', color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5 }}>
+                      <div style={{ color: 'var(--neon-cyan)', fontSize: '10px', fontWeight: 800, marginBottom: '4px' }}>EXPLANATION</div>
                       {q.explanation}
                     </div>
                   )}
@@ -383,25 +269,9 @@ export default function Quiz() {
             })}
           </div>
 
-          {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button onClick={fetchQuiz} style={{
-              flex: 1, padding: '0.85rem',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '10px', color: 'white',
-              fontWeight: 600, cursor: 'pointer',
-            }}>
-              🔄 Retake Quiz
-            </button>
-            <button onClick={() => navigate('/syllabus')} style={{
-              flex: 1, padding: '0.85rem',
-              background: 'linear-gradient(135deg, #818cf8, #c084fc)',
-              border: 'none', borderRadius: '10px',
-              color: 'white', fontWeight: 700, cursor: 'pointer',
-            }}>
-              ← Back to Syllabus
-            </button>
+            <button onClick={fetchQuiz} className="btn-secondary" style={{ flex: 1 }}>🔄 RETAKE QUIZ</button>
+            <button onClick={() => navigate('/syllabus')} className="btn-primary" style={{ flex: 1 }}>← RETURN TO TOPICS</button>
           </div>
         </div>
       </DashboardLayout>
@@ -414,194 +284,90 @@ export default function Quiz() {
 
   return (
     <DashboardLayout noSidebar={true}>
-      <div style={{ maxWidth: '1100px', width: '100%', margin: '0 auto' }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
-          <button
-            onClick={() => navigate('/syllabus')}
-            style={{
-              background: 'transparent',
-              border: 'none', color: 'rgba(255,255,255,0.4)',
-              cursor: 'pointer', fontSize: '0.9rem',
-              marginBottom: '1.5rem', padding: 0,
-            }}
-          >
-            ← Back to Syllabus
-          </button>
-          <h2 style={{
-            fontSize: '1.8rem', fontWeight: 700,
-            color: 'white', marginBottom: '0.5rem',
-          }}>
-            {decodedName}
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
-            {answered} of {questions.length} answered
-          </p>
-        </div>
-
-        {/* Progress Bar */}
-        <div style={{
-          height: '4px', background: 'rgba(255,255,255,0.08)',
-          borderRadius: '2px', marginBottom: '1.5rem', overflow: 'hidden',
-        }}>
-          <div style={{
-            height: '100%',
-            width: `${(answered / questions.length) * 100}%`,
-            background: 'linear-gradient(135deg, #818cf8, #c084fc)',
-            borderRadius: '2px', transition: 'width 0.3s ease',
-          }} />
-        </div>
-
-        {/* Question Navigation Pills */}
-        <div style={{
-          display: 'flex', gap: '0.5rem',
-          marginBottom: '2rem', flexWrap: 'wrap', justifyContent: 'center'
-        }}>
-          {questions.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              style={{
-                width: '36px', height: '36px',
-                borderRadius: '8px',
-                cursor: 'pointer', fontSize: '0.82rem',
-                fontWeight: 600, transition: 'all 0.15s',
-                background: current === i
-                  ? 'linear-gradient(135deg, #818cf8, #c084fc)'
-                  : selected[i] !== undefined
-                    ? 'rgba(110,231,183,0.2)'
-                    : 'rgba(255,255,255,0.06)',
-                color: current === i
-                  ? 'white'
-                  : selected[i] !== undefined
-                    ? '#6ee7b7'
-                    : 'rgba(255,255,255,0.5)',
-                border: selected[i] !== undefined && current !== i
-                  ? '1px solid rgba(110,231,183,0.3)'
-                  : current === i ? 'none' : '1px solid transparent',
-              }}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-
-        {/* Current Question */}
-        <div style={{ ...glass, marginBottom: '1.25rem' }}>
-          <div style={{
-            fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)',
-            marginBottom: '1rem', textAlign: 'center'
-          }}>
-            Question {current + 1} of {questions.length}
+      <div className="page-enter" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)' }}>{decodedName.toUpperCase()}</h2>
+            <div style={{ fontSize: '10px', color: 'var(--neon-cyan)', fontFamily: 'var(--font-mono)', letterSpacing: '0.2em' }}>QUIZ IN PROGRESS // {answered} OF {questions.length} COMPLETED</div>
           </div>
-          <p style={{
-            fontSize: '1.25rem', fontWeight: 600,
-            color: 'white', lineHeight: 1.6,
-            marginBottom: '1.5rem', textAlign: 'center'
-          }}>
+          <button onClick={() => navigate('/syllabus')} className="btn-ghost" style={{ fontSize: '10px' }}>EXIT QUIZ</button>
+        </div>
+
+        <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', marginBottom: '3rem', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${(answered / questions.length) * 100}%`, background: 'var(--neon-pink)', boxShadow: 'var(--glow-pink)', transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {questions.map((_, i) => {
+            const isCurrent = current === i;
+            const isAnswered = selected[i] !== undefined;
+            return (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                style={{
+                  width: '40px', height: '40px', borderRadius: '4px', cursor: 'pointer',
+                  fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '14px', transition: 'all 0.2s',
+                  background: isCurrent ? 'var(--neon-pink)' : isAnswered ? 'rgba(255, 45, 120, 0.15)' : 'rgba(255,255,255,0.03)',
+                  color: isCurrent ? 'white' : isAnswered ? 'var(--neon-pink)' : 'var(--text-muted)',
+                  border: isCurrent ? 'none' : isAnswered ? '1px solid var(--neon-pink)' : '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: isCurrent ? 'var(--glow-pink)' : 'none'
+                }}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="glass-panel" style={{ padding: '3rem', marginBottom: '2rem', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: -12, left: 30, background: 'var(--bg-base)', padding: '0 10px', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>QUESTION {String(current + 1).padStart(2, '0')}</div>
+          
+          <p style={{ fontSize: '1.6rem', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '3rem', lineHeight: 1.5 }}>
             {q.question}
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {q.options.map((opt, oi) => {
               const isSelected = selected[current] === oi;
               return (
                 <div
                   key={oi}
                   onClick={() => handleSelect(current, oi)}
-                  style={{
-                    padding: '0.85rem 1rem',
-                    background: isSelected
-                      ? 'rgba(129,140,248,0.2)'
-                      : 'rgba(255,255,255,0.03)',
-                    border: isSelected
-                      ? '1px solid rgba(129,140,248,0.5)'
-                      : '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    display: 'flex', alignItems: 'center', gap: '0.75rem',
-                  }}
-                  onMouseOver={e => {
-                    if (!isSelected)
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                  }}
-                  onMouseOut={e => {
-                    if (!isSelected)
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                  className={isSelected ? "btn-primary" : "btn-secondary"}
+                  style={{ 
+                    padding: '1.5rem', textAlign: 'left', display: 'flex', gap: '1rem', alignItems: 'center',
+                    border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    background: isSelected ? 'var(--neon-pink)' : 'rgba(255,255,255,0.03)'
                   }}
                 >
-                  <div style={{
-                    width: '28px', height: '28px', borderRadius: '50%',
-                    border: isSelected
-                      ? '2px solid #818cf8'
-                      : '2px solid rgba(255,255,255,0.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, fontSize: '0.75rem', fontWeight: 700,
-                    background: isSelected ? 'rgba(129,140,248,0.3)' : 'transparent',
-                    color: isSelected ? '#818cf8' : 'rgba(255,255,255,0.4)',
+                  <div style={{ 
+                    width: '32px', height: '32px', borderRadius: '4px', background: 'rgba(0,0,0,0.2)', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px', flexShrink: 0,
+                    color: isSelected ? 'white' : 'var(--neon-cyan)'
                   }}>
                     {['A', 'B', 'C', 'D'][oi]}
                   </div>
-                  <span style={{
-                    fontSize: '0.9rem',
-                    color: isSelected ? 'white' : 'rgba(255,255,255,0.7)',
-                  }}>
-                    {opt}
-                  </span>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{opt}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Navigation */}
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-          <button
-            onClick={() => setCurrent(Math.max(0, current - 1))}
-            disabled={current === 0}
-            style={{
-              flex: 1, padding: '0.75rem',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '10px', color: 'rgba(255,255,255,0.6)',
-              cursor: current === 0 ? 'not-allowed' : 'pointer',
-              opacity: current === 0 ? 0.4 : 1,
-            }}
-          >
-            ← Previous
-          </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button onClick={() => setCurrent(Math.max(0, current - 1))} disabled={current === 0} className="btn-ghost" style={{ flex: 1 }}>PREVIOUS</button>
           {current < questions.length - 1 ? (
-            <button
-              onClick={() => setCurrent(current + 1)}
-              style={{
-                flex: 1, padding: '0.75rem',
-                background: 'linear-gradient(135deg, #818cf8, #c084fc)',
-                border: 'none', borderRadius: '10px',
-                color: 'white', fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Next →
-            </button>
+            <button onClick={() => setCurrent(current + 1)} className="btn-secondary" style={{ flex: 1 }}>NEXT</button>
           ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || answered < questions.length}
-              style={{
-                flex: 2, padding: '0.75rem',
-                background: answered === questions.length
-                  ? 'linear-gradient(135deg, #6ee7b7, #818cf8)'
-                  : 'rgba(255,255,255,0.05)',
-                border: answered === questions.length
-                  ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '10px',
-                color: answered === questions.length ? '#0d0d1a' : 'rgba(255,255,255,0.3)',
-                fontWeight: 700, cursor: submitting ? 'wait'
-                  : answered < questions.length ? 'not-allowed' : 'pointer',
-              }}
+            <button 
+              onClick={handleSubmit} 
+              disabled={submitting || answered < questions.length} 
+              className="btn-primary" 
+              style={{ flex: 2 }}
             >
-              {submitting ? 'Submitting...' : `Submit Quiz (${answered}/${questions.length})`}
+              {submitting ? 'SUBMITTING...' : `SUBMIT QUIZ (${answered}/${questions.length})`}
             </button>
           )}
         </div>

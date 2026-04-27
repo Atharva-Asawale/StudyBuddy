@@ -41,12 +41,8 @@ const CountUp = ({ end, duration = 1500, decimals = 0 }) => {
 };
 
 const StatCard = ({ title, value, icon: Icon, color, decimals = 0 }) => (
-  <div className="glass-card" style={{
-    background: 'rgba(5, 5, 20, 0.6)',
-    backdropFilter: 'blur(12px)',
-    borderRadius: '16px',
-    padding: '1.5rem',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+  <div className="glass-panel" style={{
+    background: 'var(--card-bg)',
     display: 'flex',
     flexDirection: 'column',
     gap: '0.5rem',
@@ -152,7 +148,7 @@ export default function AdminDashboard() {
 
       {/* CHARTS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
-        <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+        <div className="glass-panel" style={{ background: 'var(--card-bg)' }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', textAlign: 'center' }}>Branch Distribution</h3>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -170,14 +166,14 @@ export default function AdminDashboard() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <RechartsTooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
+                <RechartsTooltip contentStyle={{ background: '#1a1a2e', border: 'none', color: 'white' }} />
                 <Legend verticalAlign="bottom" height={36}/>
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+        <div className="glass-panel" style={{ background: 'var(--card-bg)' }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', textAlign: 'center' }}>Semester Distribution</h3>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -185,7 +181,7 @@ export default function AdminDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" fontSize={12} />
                 <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
-                <RechartsTooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
+                <RechartsTooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ background: '#1a1a2e', border: 'none', color: 'white' }} />
                 <Bar dataKey="students" radius={[4, 4, 0, 0]}>
                   {semData.map((entry, index) => (
                     <BarCell key={`cell-${index}`} fill="#818cf8" fillOpacity={0.8} />
@@ -198,7 +194,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* RECENT STUDENTS TABLE */}
-      <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+      <div className="glass-panel" style={{ background: 'var(--card-bg)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Recent Registrations</h3>
           <button 
@@ -248,7 +244,7 @@ export default function AdminDashboard() {
 
       {/* PLATFORM HEALTH */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-        <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="glass-panel" style={{ background: 'var(--card-bg)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ width: '50px', height: '50px', borderRadius: '50%', border: '4px solid #818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{onboardedPercent}%</span>
           </div>
@@ -258,7 +254,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="glass-panel" style={{ background: 'var(--card-bg)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ color: '#eab308', background: 'rgba(234, 179, 8, 0.1)', padding: '12px', borderRadius: '12px' }}>
             <Activity size={24} />
           </div>
@@ -268,7 +264,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="glass-card" style={{ background: 'rgba(5, 5, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="glass-panel" style={{ background: 'var(--card-bg)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', padding: '12px', borderRadius: '12px' }}>
             <AlertTriangle size={24} />
           </div>

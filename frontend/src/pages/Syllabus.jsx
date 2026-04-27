@@ -3,32 +3,14 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import { syllabusService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import GameLoader from '../components/GameLoader';
+import MiniLoader from '../components/MiniLoader';
+
 const typeConfig = {
-  SUBJECT: { icon: '📘', color: '#818cf8', bg: 'rgba(129,140,248,0.1)', border: 'rgba(129,140,248,0.3)' },
-  UNIT: { icon: '📂', color: '#f9a8d4', bg: 'rgba(249,168,212,0.1)', border: 'rgba(249,168,212,0.3)' },
-  TOPIC: { icon: '📌', color: '#6ee7b7', bg: 'rgba(110,231,183,0.1)', border: 'rgba(110,231,183,0.3)' },
-  SUBTOPIC: { icon: '◦', color: '#fde68a', bg: 'rgba(253,230,138,0.1)', border: 'rgba(253,230,138,0.3)' },
-};
-
-const glass = {
-  background: 'rgba(15,15,40,0.6)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '16px',
-  marginBottom: '1rem',
-  overflow: 'hidden',
-};
-
-const inputStyle = {
-  padding: '0.6rem 0.75rem',
-  background: 'rgba(0,0,0,0.3)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '8px',
-  color: 'white',
-  fontSize: '0.85rem',
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
+  SUBJECT: { icon: '📘', color: 'var(--neon-purple)', bg: 'rgba(129,140,248,0.1)', border: 'rgba(129,140,248,0.3)' },
+  UNIT: { icon: '📂', color: 'var(--neon-pink)', bg: 'rgba(249,168,212,0.1)', border: 'rgba(249,168,212,0.3)' },
+  TOPIC: { icon: '📌', color: 'var(--neon-cyan)', bg: 'rgba(110,231,183,0.1)', border: 'rgba(110,231,183,0.3)' },
+  SUBTOPIC: { icon: '◦', color: 'var(--neon-gold)', bg: 'rgba(253,230,138,0.1)', border: 'rgba(253,230,138,0.3)' },
 };
 
 // ─── Add Custom Node Form ───────────────────────────────────
@@ -64,34 +46,22 @@ function AddNodeForm({ parentId, parentType, branch, semester, onSave, onCancel 
 
   return (
     <div style={{
-      display: 'flex', gap: '0.5rem',
-      padding: '0.5rem 0', alignItems: 'center',
+      display: 'flex', gap: '0.75rem', padding: '1rem', alignItems: 'center',
+      background: 'rgba(255,255,255,0.02)', borderRadius: '8px', marginBottom: '0.5rem'
     }}>
       <input
-        style={{ ...inputStyle, flex: 1 }}
-        placeholder={`Add ${childType.toLowerCase()} name...`}
+        placeholder={`ENTER ${childType} NAME...`}
         value={name}
         onChange={e => setName(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && handleSave()}
         autoFocus
+        style={{ flex: 1 }}
       />
-      <button onClick={handleSave} disabled={saving} style={{
-        padding: '0.5rem 0.85rem',
-        background: 'linear-gradient(135deg, #818cf8, #c084fc)',
-        border: 'none', borderRadius: '8px',
-        color: 'white', fontSize: '0.8rem',
-        cursor: 'pointer', fontWeight: 600,
-      }}>
-        {saving ? '...' : 'Add'}
+      <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ padding: '8px 20px', fontSize: '10px' }}>
+        {saving ? <MiniLoader /> : 'SAVE'}
       </button>
-      <button onClick={onCancel} style={{
-        padding: '0.5rem 0.75rem',
-        background: 'transparent',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: '8px', color: 'rgba(255,255,255,0.4)',
-        fontSize: '0.8rem', cursor: 'pointer',
-      }}>
-        Cancel
+      <button onClick={onCancel} className="btn-ghost" style={{ padding: '8px 20px', fontSize: '10px' }}>
+        CANCEL
       </button>
     </div>
   );
@@ -135,16 +105,18 @@ function TreeNode({ node, depth = 0, onRefresh }) {
   };
 
   return (
-    <div style={{ marginLeft: depth > 0 ? '1.25rem' : '0' }}>
+    <div style={{ marginLeft: depth > 0 ? '1.5rem' : '0', borderLeft: depth > 0 ? `1px dashed ${config.color}33` : 'none' }}>
       {/* Node Row */}
       <div style={{
         display: 'flex', alignItems: 'center',
-        gap: '0.5rem', padding: '0.55rem 0.75rem',
-        borderRadius: '8px', cursor: 'pointer',
-        transition: 'background 0.15s',
-        borderLeft: depth > 0 ? `2px solid ${config.color}30` : 'none',
+        gap: '0.75rem', padding: '0.75rem 1rem',
+        borderRadius: '6px', cursor: 'pointer',
+        transition: 'all 0.2s',
+        marginBottom: '2px',
+        position: 'relative'
       }}
-        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+        className="syllabus-node-row"
+        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
         onMouseOut={e => e.currentTarget.style.background = 'transparent'}
       >
         {/* Expand Arrow */}
@@ -152,117 +124,83 @@ function TreeNode({ node, depth = 0, onRefresh }) {
           <span
             onClick={() => setOpen(!open)}
             style={{
-              fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)',
+              fontSize: '10px', color: config.color,
               transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
               transition: 'transform 0.2s', display: 'inline-block',
-              flexShrink: 0, width: '12px',
+              flexShrink: 0, width: '16px',
             }}
           >▶</span>
         ) : (
-          <span style={{ width: '12px', flexShrink: 0 }} />
+          <span style={{ width: '16px', flexShrink: 0 }} />
         )}
-
-        {/* Icon */}
-        <span style={{ fontSize: '0.85rem', flexShrink: 0 }}>{config.icon}</span>
 
         {/* Name — editable if custom */}
         {editing ? (
           <input
-            style={{ ...inputStyle, flex: 1, padding: '0.3rem 0.5rem' }}
             value={editName}
             onChange={e => setEditName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setEditing(false); }}
             autoFocus
             onClick={e => e.stopPropagation()}
+            style={{ flex: 1, padding: '4px 8px' }}
           />
         ) : (
           <span
             onClick={() => setOpen(!open)}
             style={{
-              flex: 1, fontSize: '0.88rem',
-              color: depth === 0 ? 'white' : 'rgba(255,255,255,0.75)',
-              fontWeight: depth === 0 ? 600 : 400,
+              flex: 1, fontSize: depth === 0 ? '14px' : '13px',
+              color: depth === 0 ? 'var(--text-primary)' : 'var(--text-secondary)',
+              fontWeight: depth === 0 ? 700 : 500,
+              fontFamily: 'var(--font-ui)',
+              letterSpacing: '0.02em'
             }}
           >
-            {node.name}
+            {node.name.toUpperCase()}
           </span>
         )}
 
-        {/* Custom badge */}
-        {isCustom && !editing && (
-          <span style={{
-            fontSize: '0.65rem', padding: '0.15rem 0.45rem',
-            background: 'rgba(253,230,138,0.15)',
-            border: '1px solid rgba(253,230,138,0.3)',
-            borderRadius: '999px', color: '#fde68a',
-            flexShrink: 0,
-          }}>custom</span>
-        )}
-
-        {/* Type badge */}
-        {!editing && (
-          <span style={{
-            fontSize: '0.65rem', padding: '0.15rem 0.5rem',
-            background: config.bg, border: `1px solid ${config.border}`,
-            borderRadius: '999px', color: config.color,
-            flexShrink: 0,
-          }}>{node.type}</span>
-        )}
+        {/* Badges */}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {isCustom && !editing && (
+            <span className="badge badge-warning" style={{ fontSize: '8px' }}>CUSTOM</span>
+          )}
+          {!editing && (
+            <span style={{
+              fontSize: '8px', padding: '2px 8px',
+              background: 'rgba(255,255,255,0.05)', border: `1px solid ${config.color}44`,
+              borderRadius: '2px', color: config.color,
+              fontFamily: 'var(--font-mono)', fontWeight: 800
+            }}>{node.type}</span>
+          )}
+        </div>
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}
+        <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, marginLeft: '1rem' }}
           onClick={e => e.stopPropagation()}>
 
           {editing ? (
             <>
-              <button onClick={handleEdit} disabled={saving} style={{
-                padding: '0.25rem 0.6rem', background: 'rgba(110,231,183,0.2)',
-                border: '1px solid rgba(110,231,183,0.4)', borderRadius: '6px',
-                color: '#6ee7b7', fontSize: '0.72rem', cursor: 'pointer',
-              }}>
-                {saving ? '...' : '✓'}
-              </button>
-              <button onClick={() => setEditing(false)} style={{
-                padding: '0.25rem 0.6rem', background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px',
-                color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', cursor: 'pointer',
-              }}>✕</button>
+              <button onClick={handleEdit} disabled={saving} className="btn-ghost" style={{ padding: '4px 8px', borderColor: 'var(--neon-green)', color: 'var(--neon-green)' }}>✓</button>
+              <button onClick={() => setEditing(false)} className="btn-ghost" style={{ padding: '4px 8px' }}>✕</button>
             </>
           ) : (
             <>
               {canAddChild && (
-                <button onClick={() => { setShowAddForm(!showAddForm); setOpen(true); }} style={{
-                  padding: '0.25rem 0.6rem', background: 'rgba(129,140,248,0.1)',
-                  border: '1px solid rgba(129,140,248,0.3)', borderRadius: '6px',
-                  color: '#818cf8', fontSize: '0.72rem', cursor: 'pointer',
-                }}>+ Add</button>
+                <button onClick={() => { setShowAddForm(!showAddForm); setOpen(true); }} className="btn-ghost" style={{ padding: '4px 10px', fontSize: '9px' }}>+ ADD</button>
               )}
               {node.type === 'TOPIC' && (
                 <button
                   onClick={() => navigate(`/quiz/${node.id}/${encodeURIComponent(node.name)}`)}
-                  style={{
-                    padding: '0.25rem 0.6rem',
-                    background: 'rgba(110,231,183,0.1)',
-                    border: '1px solid rgba(110,231,183,0.3)',
-                    borderRadius: '6px', color: '#6ee7b7',
-                    fontSize: '0.72rem', cursor: 'pointer',
-                  }}
+                  className="btn-primary"
+                  style={{ padding: '4px 10px', fontSize: '9px' }}
                 >
-                  📝 Quiz
+                  📝 QUIZ
                 </button>
               )}
               {isCustom && (
                 <>
-                  <button onClick={() => setEditing(true)} style={{
-                    padding: '0.25rem 0.6rem', background: 'rgba(253,230,138,0.1)',
-                    border: '1px solid rgba(253,230,138,0.3)', borderRadius: '6px',
-                    color: '#fde68a', fontSize: '0.72rem', cursor: 'pointer',
-                  }}>✏️</button>
-                  <button onClick={handleDelete} style={{
-                    padding: '0.25rem 0.6rem', background: 'rgba(252,165,165,0.1)',
-                    border: '1px solid rgba(252,165,165,0.3)', borderRadius: '6px',
-                    color: '#fca5a5', fontSize: '0.72rem', cursor: 'pointer',
-                  }}>🗑️</button>
+                  <button onClick={() => setEditing(true)} className="btn-ghost" style={{ padding: '4px 8px', fontSize: '9px' }}>✏️</button>
+                  <button onClick={handleDelete} className="btn-ghost" style={{ padding: '4px 8px', fontSize: '9px', borderColor: 'var(--neon-red)', color: 'var(--neon-red)' }}>🗑️</button>
                 </>
               )}
             </>
@@ -286,7 +224,7 @@ function TreeNode({ node, depth = 0, onRefresh }) {
 
       {/* Children */}
       {open && hasChildren && (
-        <div>
+        <div style={{ paddingBottom: '0.5rem' }}>
           {node.children.map(child => (
             <TreeNode key={child.id} node={child} depth={depth + 1} onRefresh={onRefresh} />
           ))}
@@ -299,57 +237,54 @@ function TreeNode({ node, depth = 0, onRefresh }) {
 // ─── Subject Card ───────────────────────────────────────────
 function SubjectCard({ node, onRefresh }) {
   const [open, setOpen] = useState(false);
-
-  const weakCount = 0;
   const customCount = node.children?.filter(c => c.isCustom).length || 0;
 
   return (
-    <div style={glass}>
+    <div className="glass-panel" style={{ marginBottom: '1.5rem', overflow: 'hidden', padding: 0 }}>
       <div
         onClick={() => setOpen(!open)}
         style={{
           display: 'flex', alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '1rem 1.25rem', cursor: 'pointer',
+          padding: '1.5rem', cursor: 'pointer',
+          background: open ? 'rgba(255,255,255,0.03)' : 'transparent',
+          transition: 'all 0.3s'
         }}
-        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-        onMouseOut={e => e.currentTarget.style.background = 'transparent'}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1.2rem' }}>📘</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ 
+            width: '48px', height: '48px', borderRadius: '8px', 
+            background: 'rgba(255, 45, 120, 0.1)', border: '1px solid var(--neon-pink)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1.5rem', boxShadow: 'var(--glow-pink)'
+          }}>📘</div>
           <div>
-            <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'white' }}>
-              {node.name}
+            <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)', fontFamily: 'var(--font-display)', letterSpacing: '0.05em' }}>
+              {node.name.toUpperCase()}
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.15rem' }}>
-              Semester {node.semester}
+            <div style={{ fontSize: '10px', color: 'var(--neon-cyan)', fontFamily: 'var(--font-mono)', marginTop: '4px', letterSpacing: '0.1em' }}>
+              SEMESTER {node.semester} // SUBJECT
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {customCount > 0 && (
-            <span style={{
-              fontSize: '0.7rem', padding: '0.2rem 0.6rem',
-              background: 'rgba(253,230,138,0.15)',
-              color: '#fde68a', borderRadius: '999px',
-              border: '1px solid rgba(253,230,138,0.3)',
-            }}>
-              {customCount} custom
-            </span>
+            <span className="badge badge-warning" style={{ fontSize: '9px' }}>{customCount} CUSTOM TOPICS</span>
           )}
           <span style={{
-            fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)',
+            fontSize: '12px', color: 'var(--text-muted)',
             transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s', display: 'inline-block',
+            transition: 'transform 0.3s ease', display: 'inline-block',
           }}>▼</span>
         </div>
       </div>
 
       {open && (
         <div style={{
-          padding: '0.5rem 1.25rem 1rem',
+          padding: '1rem 1.5rem 2rem',
           borderTop: '1px solid rgba(255,255,255,0.05)',
+          background: 'rgba(0,0,0,0.2)'
         }}>
           {node.children?.map(child => (
             <TreeNode key={child.id} node={child} depth={1} onRefresh={onRefresh} />
@@ -379,7 +314,7 @@ export default function Syllabus() {
       setTree(res.data);
       cacheSyllabusData({ semester: sem, data: res.data });
     } catch (err) {
-      setError('Failed to load syllabus. Make sure your branch matches exactly.');
+      setError('FAILED TO LOAD SYLLABUS. PLEASE CHECK YOUR CONNECTION.');
     } finally {
       setLoading(false);
     }
@@ -395,127 +330,71 @@ export default function Syllabus() {
     }
   }, [activeSem]);
 
-  const allSemesters = [3, 4, 5, 6, 7, 8];
+  const allSemesters = [1, 2, 3, 4, 5, 6, 7, 8];
+
+  if (loading) return <GameLoader message="LOADING SYLLABUS..." subMessage={`LOADING SEMESTER ${activeSem} DATA`} />;
 
   return (
     <DashboardLayout>
-
-      {/* Header */}
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div>
-            <h2 style={{
-              fontSize: '1.8rem', fontWeight: 700,
-              color: 'white', letterSpacing: '-0.02em',
-              marginBottom: '0.35rem',
-            }}>
-              Syllabus Tree
-            </h2>
-            <p style={{ color: '#000000', fontSize: '0.95rem', fontWeight: 600 }}>
-              Branch: <span style={{ color: '#818cf8', fontWeight: 700 }}>
-                {currentUser?.branch || '—'}
-              </span>
-            </p>
+      <div className="page-enter">
+        {/* Header */}
+        <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>SYLLABUS</h1>
+          <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-pink)', fontSize: '12px', letterSpacing: '0.2em' }}>
+            BRANCH: {currentUser?.branch?.toUpperCase() || 'UNKNOWN'}
           </div>
 
           {/* Legend */}
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
             {Object.entries(typeConfig).map(([type, { color, icon }]) => (
-              <div key={type} style={{
-                display: 'flex', alignItems: 'center',
-                gap: '0.4rem', fontSize: '0.75rem',
-                color: 'rgba(255,255,255,0.4)',
-              }}>
-                <span style={{ fontWeight: 600 }}>{icon}</span>
-                <span style={{ color, fontWeight: 700 }}>{type}</span>
+              <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: '12px' }}>{icon}</span>
+                <span style={{ color, fontWeight: 800 }}>{type}</span>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Semester Tabs */}
-        {allSemesters.length > 0 && (
-          <div style={{
-            display: 'flex', gap: '0.5rem',
-            marginTop: '1.5rem', flexWrap: 'wrap',
-            justifyContent: 'center'
-          }}>
+          {/* Semester Tabs */}
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             {allSemesters.map(sem => (
               <button
                 key={sem}
                 onClick={() => setActiveSem(sem)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: activeSem === sem
-                    ? 'linear-gradient(135deg, #818cf8, #c084fc)'
-                    : 'rgba(255,255,255,0.05)',
-                  border: activeSem === sem
-                    ? 'none'
-                    : '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                  color: activeSem === sem ? 'white' : 'rgba(255,255,255,0.5)',
-                  fontSize: '0.85rem', fontWeight: 600,
-                  cursor: 'pointer', transition: 'all 0.18s',
-                }}
+                className={activeSem === sem ? "btn-primary" : "btn-ghost"}
+                style={{ padding: '8px 18px', fontSize: '11px' }}
               >
-                Sem {sem}
+                SEM {sem}
                 {sem === currentUser?.currentSemester && (
-                  <span style={{
-                    marginLeft: '0.4rem', fontSize: '0.6rem',
-                    background: 'rgba(110,231,183,0.3)',
-                    color: '#6ee7b7', padding: '0.1rem 0.35rem',
-                    borderRadius: '999px',
-                  }}>current</span>
+                  <span style={{ marginLeft: '6px', fontSize: '8px', color: 'var(--neon-cyan)', fontWeight: 800 }}>[CURRENT]</span>
                 )}
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Content */}
+        {error ? (
+          <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', borderTop: '4px solid var(--neon-red)' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
+            <p style={{ color: 'var(--neon-red)', fontFamily: 'var(--font-mono)', marginBottom: '1.5rem' }}>{error}</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              BRANCH: <strong style={{ color: 'var(--text-primary)' }}>{currentUser?.branch}</strong>
+            </p>
+          </div>
+        ) : tree.length === 0 ? (
+          <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📚</div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>NO DATA FOUND FOR SEMESTER {activeSem}</p>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '10px' }}>BRANCH: {currentUser?.branch}</p>
+          </div>
+        ) : (
+          <div style={{ paddingBottom: '4rem' }}>
+            {tree.map(subject => (
+              <SubjectCard key={subject.id} node={subject} onRefresh={() => fetchTree(activeSem)} />
+            ))}
+          </div>
         )}
       </div>
-
-      {/* Content */}
-      {loading ? (
-        <div style={{
-          textAlign: 'center', padding: '4rem',
-          color: 'rgba(255,255,255,0.3)',
-        }}>
-          Loading syllabus...
-        </div>
-      ) : error ? (
-        <div style={{
-          padding: '1.5rem',
-          background: 'rgba(252,165,165,0.1)',
-          border: '1px solid rgba(252,165,165,0.3)',
-          borderRadius: '12px', color: '#fca5a5',
-        }}>
-          ⚠️ {error}
-          <p style={{ fontSize: '0.82rem', marginTop: '0.5rem', color: 'rgba(255,255,255,0.4)' }}>
-            Your registered branch: <strong>{currentUser?.branch}</strong>.
-            Make sure it matches exactly with the database (e.g. "CSE" or "CSE (AIML)").
-          </p>
-        </div>
-      ) : tree.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: '4rem',
-          color: 'rgba(255,255,255,0.3)',
-          background: 'rgba(15,15,40,0.6)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255,255,255,0.08)',
-        }}>
-          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📚</div>
-          <p>No syllabus found for Semester {activeSem}</p>
-          <p style={{ fontSize: '0.82rem', marginTop: '0.4rem' }}>
-            Branch: {currentUser?.branch}
-          </p>
-        </div>
-      ) : (
-        <div>
-          {tree.map(subject => (
-            <SubjectCard key={subject.id} node={subject} onRefresh={() => fetchTree(activeSem)} />
-          ))}
-        </div>
-      )}
-
     </DashboardLayout>
   );
 }

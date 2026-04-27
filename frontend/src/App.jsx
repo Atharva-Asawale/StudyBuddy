@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Iridescence from './components/Iridescence';
@@ -38,8 +38,23 @@ function AppContent() {
   const location = useLocation();
   const isLandingPage = location.pathname === '/';
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollProgress = document.getElementById('scroll-progress');
+      if (scrollProgress) {
+        const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = (window.scrollY / totalHeight) * 100;
+        scrollProgress.style.width = `${progress}%`;
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
+      <div id="scroll-progress"></div>
+      <div className="neon-vignette"></div>
 
       {/* Background */}
         <div style={{
@@ -61,11 +76,11 @@ function AppContent() {
               rotationSpeed={0.05}
               repulsionStrength={0}
               autoCenterRepulsion={0}
-              starSpeed={0.3}
-              speed={0.4}
+              starSpeed={0.2}
+              speed={0.25}
             />
           ) : (
-            <Iridescence color={[0.5, 0.6, 0.9]} speed={1} amplitude={0.1} mouseReact />
+            <Iridescence color={[0.4, 0.5, 0.8]} speed={0.6} amplitude={0.07} mouseReact />
           )
         )}
       </div>

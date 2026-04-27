@@ -29,13 +29,14 @@ export default function AdminLayout({ children }) {
 
       {/* Sidebar */}
       <aside style={{
-        width: '240px',
-        background: 'rgba(10, 10, 30, 0.95)',
+        width: '280px',
+        background: 'var(--card-bg)',
         borderRight: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 10,
-        backdropFilter: 'blur(10px)'
+        backdropFilter: 'var(--card-blur)',
+        boxShadow: '4px 0 24px rgba(0,0,0,0.5)'
       }}>
         <div style={{ padding: '2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#818cf8' }}>StudyBuddy</h1>

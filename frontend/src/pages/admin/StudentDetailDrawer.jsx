@@ -75,19 +75,19 @@ export default function StudentDetailDrawer({ userId, onClose }) {
 
               {/* Quick Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div style={{ padding: '1rem', background: 'rgba(5, 5, 20, 0.8)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>CGPA</div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#22c55e' }}>{student.latestCgpa ? student.latestCgpa.toFixed(2) : 'N/A'}</div>
                 </div>
-                <div style={{ padding: '1rem', background: 'rgba(5, 5, 20, 0.8)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Quizzes</div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#3b82f6' }}>{student.totalQuizzes}</div>
                 </div>
-                <div style={{ padding: '1rem', background: 'rgba(5, 5, 20, 0.8)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Mastered</div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#10b981' }}>{student.masteredTopics}</div>
                 </div>
-                <div style={{ padding: '1rem', background: 'rgba(5, 5, 20, 0.8)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Weak</div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ef4444' }}>{student.weakTopics}</div>
                 </div>

@@ -145,11 +145,8 @@ export default function AdminStudents() {
       </div>
 
       {/* Table Section */}
-      <div className="glass-card" style={{ 
-        background: 'rgba(5, 5, 20, 0.6)', 
-        backdropFilter: 'blur(12px)',
-        borderRadius: '16px', 
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+      <div className="glass-panel" style={{ 
+        background: 'var(--card-bg)', 
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column'

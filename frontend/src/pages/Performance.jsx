@@ -1,38 +1,13 @@
-
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
-import { debtService, studentService } from '../services/api';
-
-const QUIZ_RESULTS_KEY = 'studybuddy_quiz_results';
-
-const glass = {
-  background: 'rgba(15, 15, 40, 0.62)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '16px',
-  padding: '1.25rem',
-};
-
-const sectionLabel = {
-  fontSize: '0.8rem',
-  fontWeight: 700,
-  color: 'rgba(255,255,255,0.55)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.08em',
-  marginBottom: '0.95rem',
-  textAlign: 'center',
-};
+import { studentService } from '../services/api';
+import GameLoader from '../components/GameLoader';
 
 const statusConfig = {
-  strong: { label: 'Strong', color: '#22c55e', bg: 'rgba(34,197,94,0.16)', border: 'rgba(34,197,94,0.4)', description: 'all strong' },
-  fair: { label: 'Fair', color: '#eab308', bg: 'rgba(234,179,8,0.16)', border: 'rgba(234,179,8,0.4)', description: 'fair topics' },
-  weak: { label: 'Weak', color: '#ef4444', bg: 'rgba(239,68,68,0.16)', border: 'rgba(239,68,68,0.4)', description: 'weak' },
-};
-
-const parseNumber = (value) => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
+  strong: { label: 'STRONG', color: 'var(--neon-green)', bg: 'rgba(0, 255, 136, 0.08)', border: 'rgba(0, 255, 136, 0.3)', description: 'STRONG UNDERSTANDING' },
+  fair: { label: 'AVERAGE', color: 'var(--neon-gold)', bg: 'rgba(255, 171, 0, 0.08)', border: 'rgba(255, 171, 0, 0.3)', description: 'AVERAGE UNDERSTANDING' },
+  weak: { label: 'WEAK', color: 'var(--neon-red)', bg: 'rgba(255, 23, 68, 0.08)', border: 'rgba(255, 23, 68, 0.3)', description: 'WEAK UNDERSTANDING' },
 };
 
 const getTopicStatusKey = (score) => {
@@ -40,26 +15,6 @@ const getTopicStatusKey = (score) => {
   if (score < 50) return 'weak';
   if (score < 75) return 'fair';
   return 'strong';
-};
-
-const readQuizResults = () => {
-  try {
-    const raw = sessionStorage.getItem(QUIZ_RESULTS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-const inferSubjectFromTopic = (topicName) => {
-  const text = String(topicName || '').toLowerCase();
-  if (text.includes('math')) return 'Mathematics';
-  if (text.includes('physics')) return 'Physics';
-  if (text.includes('chem')) return 'Chemistry';
-  if (text.includes('algo') || text.includes('data structure') || text.includes('dbms') || text.includes('os') || text.includes('network')) return 'Computer Science';
-  return 'General';
 };
 
 const buildHeatmapTopics = (dashboardData) => {
@@ -102,7 +57,6 @@ export default function Performance() {
   const navigate = useNavigate();
 
   const [debtData, setDebtData] = useState(null);
-  const [quizResults, setQuizResults] = useState([]);
   const [hoveredTopicKey, setHoveredTopicKey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -114,7 +68,7 @@ export default function Performance() {
       const response = await studentService.getDashboard();
       setDebtData(response.data || null);
     } catch {
-      setError('Failed to load data. Please refresh.');
+      setError('FAILED TO LOAD HEATMAP DATA.');
     } finally {
       setLoading(false);
     }
@@ -126,61 +80,80 @@ export default function Performance() {
 
   const groupedHeatmapTopics = useMemo(() => buildHeatmapTopics(debtData), [debtData]);
 
+  if (loading) return <GameLoader message="LOADING PERFORMANCE..." subMessage="GENERATING HEATMAP" />;
+
   return (
     <DashboardLayout>
-      <style>{`@keyframes perfSpin { to { transform: rotate(360deg); } }`}</style>
-      <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.85rem', fontWeight: 700, color: 'white', margin: 0 }}>Performance Heatmap</h2>
-        </div>
-
-        {loading ? (
-          <div style={{ ...glass, textAlign: 'center', padding: '3rem 1.25rem' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '50%', margin: '0 auto 0.85rem', border: '3px solid rgba(56,189,248,0.25)', borderTop: '3px solid #38bdf8', animation: 'perfSpin 0.95s linear infinite' }} />
-            <div style={{ color: '#000000', fontWeight: 600 }}>Loading performance heatmap...</div>
+      <div className="page-enter" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
+        <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>PERFORMANCE HEATMAP</h1>
+          <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-cyan)', fontSize: '12px', letterSpacing: '0.2em' }}>
+            KNOWLEDGE COMPREHENSION MATRIX
           </div>
-        ) : error ? (
-          <div style={{ ...glass, textAlign: 'center', padding: '2.6rem 1.25rem' }}>
-            <div style={{ color: '#fca5a5', fontWeight: 700, marginBottom: '0.45rem' }}>{error}</div>
-            <button onClick={loadData} style={{ padding: '0.62rem 1.1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white', cursor: 'pointer' }}>Retry</button>
+        </header>
+
+        {error ? (
+          <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem', borderTop: '4px solid var(--neon-red)' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❌</div>
+            <h2 style={{ color: 'var(--neon-red)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>SYSTEM ERROR</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontFamily: 'var(--font-mono)' }}>{error}</p>
+            <button onClick={loadData} className="btn-primary">RETRY</button>
           </div>
         ) : (
-          <div style={glass}>
-            <h3 style={sectionLabel}>Topic Heatmap</h3>
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '2.5rem', textAlign: 'center' }}>TOPIC PERFORMANCE</h3>
+            
             {groupedHeatmapTopics.length ? groupedHeatmapTopics.map(([statusKey, topics]) => (
-              <div key={statusKey} style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '1rem', fontWeight: 800, color: statusConfig[statusKey].color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>
-                  {statusConfig[statusKey].label}
+              <div key={statusKey} style={{ marginBottom: '3rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ padding: '4px 12px', background: statusConfig[statusKey].bg, border: `1px solid ${statusConfig[statusKey].color}`, borderRadius: '4px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 800, color: statusConfig[statusKey].color, letterSpacing: '0.2em', fontFamily: 'var(--font-mono)' }}>
+                      {statusConfig[statusKey].label}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>
+                    {statusConfig[statusKey].description}
+                  </div>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.05)' }}></div>
                 </div>
-                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem', fontWeight: 600 }}>
-                  {statusConfig[statusKey].description}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.85rem' }}>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
                   {topics.map((topic) => {
                     const topicKey = `${topic.isCustom ? 'custom' : 'syllabus'}-${topic.topicName}`;
                     const isHovered = hoveredTopicKey === topicKey;
 
                     return (
                       <div key={topicKey} style={{ position: 'relative' }} onMouseEnter={() => setHoveredTopicKey(topicKey)} onMouseLeave={() => setHoveredTopicKey(null)}>
-                        <div style={{ minHeight: '90px', borderRadius: '12px', border: `1px solid ${topic.border}`, background: topic.bg, padding: '0.8rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                          <div style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.35rem' }} title={topic.topicName}>
-                            {topic.topicName}
+                        <div style={{ 
+                          minHeight: '100px', borderRadius: '8px', border: `1px solid ${topic.border}`, 
+                          background: topic.bg, padding: '1.25rem', display: 'flex', flexDirection: 'column', 
+                          justifyContent: 'center', transition: 'all 0.2s',
+                          boxShadow: isHovered ? `0 0 20px ${topic.statusColor}22` : 'none',
+                          transform: isHovered ? 'translateY(-2px)' : 'none'
+                        }}>
+                          <div style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '13px', marginBottom: '8px', fontFamily: 'var(--font-ui)' }} title={topic.topicName}>
+                            {topic.topicName.toUpperCase()}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                            <div style={{ fontSize: '0.9rem', color: topic.statusColor, fontWeight: 800 }}>{Math.round(topic.score)}%</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ fontSize: '18px', color: topic.statusColor, fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{Math.round(topic.score)}%</div>
                             {topic.isCustom && (
-                              <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', background: 'rgba(129,140,248,0.1)', border: '1px solid rgba(129,140,248,0.3)', borderRadius: '4px', color: '#818cf8', fontWeight: 600 }}>CUSTOM</span>
+                              <span style={{ fontSize: '8px', padding: '2px 6px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--neon-cyan)', borderRadius: '2px', color: 'var(--neon-cyan)', fontWeight: 800 }}>CUSTOM</span>
                             )}
                           </div>
                         </div>
 
                         {isHovered && (
-                          <div style={{ position: 'absolute', zIndex: 30, left: '50%', transform: 'translateX(-50%)', top: '100%', marginTop: '0.5rem', width: '220px', background: 'rgba(5,10,22,0.98)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: '12px', padding: '0.8rem', boxShadow: '0 12px 30px rgba(0,0,0,0.5)' }}>
-                            <div style={{ color: 'white', fontWeight: 700, marginBottom: '0.4rem', fontSize: '0.85rem' }}>{topic.topicName}</div>
-                            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', marginBottom: '0.2rem' }}>Accuracy: {Math.round(topic.score)}%</div>
-                            <div style={{ color: topic.statusColor, fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.8rem' }}>Status: {topic.statusLabel}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-                              Performance is tracked across all {topic.isCustom ? 'custom' : 'syllabus'} attempts.
+                          <div style={{ 
+                            position: 'absolute', zIndex: 30, left: '50%', transform: 'translateX(-50%)', bottom: '110%', 
+                            width: '240px', background: 'var(--bg-surface)', border: `1px solid ${topic.statusColor}`, 
+                            borderRadius: '4px', padding: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
+                            animation: 'pageEnter 0.2s ease-out'
+                          }}>
+                            <div style={{ color: 'var(--text-primary)', fontWeight: 800, marginBottom: '6px', fontSize: '12px', fontFamily: 'var(--font-ui)' }}>{topic.topicName.toUpperCase()}</div>
+                            <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginBottom: '4px', fontFamily: 'var(--font-mono)' }}>ACCURACY: {Math.round(topic.score)}%</div>
+                            <div style={{ color: topic.statusColor, fontSize: '11px', fontWeight: 800, fontFamily: 'var(--font-mono)', marginBottom: '10px' }}>STATUS: {topic.statusLabel}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-muted)', lineHeight: 1.4, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
+                              TRACKING DATA FROM ALL {topic.isCustom ? 'CUSTOM' : 'SYLLABUS'} ATTEMPTS.
                             </div>
                           </div>
                         )}
@@ -189,12 +162,16 @@ export default function Performance() {
                   })}
                 </div>
               </div>
-            )) : <div style={{ color: 'rgba(255,255,255,0.6)', textAlign: 'center', padding: '2rem' }}>No attempted topics yet. Take a quiz to see your performance heatmap!</div>}
+            )) : (
+              <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '4rem 2rem', fontFamily: 'var(--font-mono)' }}>
+                NO PERFORMANCE DATA FOUND. COMPLETE QUIZZES TO POPULATE HEATMAP.
+              </div>
+            )}
 
-            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '2rem', justifyContent: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop: '2rem', justifyContent: 'center', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
               {Object.entries(statusConfig).map(([key, item]) => (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'white', fontSize: '0.85rem', fontWeight: 600 }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, boxShadow: `0 0 10px ${item.color}` }} />
+                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-primary)', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color, boxShadow: `0 0 10px ${item.color}` }} />
                   {item.label}
                 </div>
               ))}

@@ -11,4 +11,5 @@ public interface QuizResultRepository extends JpaRepository<QuizResult, UUID> {
     List<QuizResult> findByUserIdOrderByAttemptedAtAsc(UUID userId);
     List<QuizResult> findByUserIdOrderByAttemptedAtDesc(UUID userId);
     List<QuizResult> findTop5ByUserIdOrderByAttemptedAtDesc(UUID userId);
+    void deleteByUserId(UUID userId);
 }

@@ -64,4 +64,47 @@ public class AdminController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @GetMapping("/manage/list")
+    public ResponseEntity<?> listAdmins() {
+        try {
+            return ResponseEntity.ok(adminService.getAllAdmins());
+        } catch (Exception e) {
+            log.error("Error listing admins", e);
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/manage/add")
+    public ResponseEntity<?> addAdmin(@RequestBody AdminManagementDTO dto) {
+        try {
+            adminService.createAdmin(dto);
+            return ResponseEntity.ok(Map.of("message", "Admin added successfully"));
+        } catch (Exception e) {
+            log.error("Error adding admin", e);
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/manage/{id}")
+    public ResponseEntity<?> deleteAdmin(@PathVariable UUID id) {
+        try {
+            adminService.deleteAdmin(id);
+            return ResponseEntity.ok(Map.of("message", "Admin deleted successfully"));
+        } catch (Exception e) {
+            log.error("Error deleting admin", e);
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/students/{id}")
+    public ResponseEntity<?> deleteStudent(@PathVariable UUID id) {
+        try {
+            adminService.deleteStudent(id);
+            return ResponseEntity.ok(Map.of("message", "Student account deleted successfully"));
+        } catch (Exception e) {
+            log.error("Error deleting student", e);
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

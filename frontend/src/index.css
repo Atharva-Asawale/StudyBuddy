@@ -168,14 +168,29 @@ input, select, textarea {
   border-radius: 8px !important;
   color: var(--text-primary) !important;
   font-family: var(--font-body) !important;
-  padding: 12px 16px !important;
+  padding: 12px 16px; /* Removed !important to allow custom padding (e.g. for icons) */
   transition: all 0.2s !important;
+}
+
+::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+  opacity: 1;
 }
 
 input:focus, select:focus, textarea:focus {
   outline: none !important;
   border-color: var(--neon-cyan) !important;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
+}
+
+.input-group {
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+  opacity: 1;
 }
 
 /* --- BADGES --- */

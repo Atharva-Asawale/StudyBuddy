@@ -12,4 +12,5 @@ public interface SemesterRepository extends JpaRepository<Semester, UUID> {
 
     @Query("SELECT s FROM Semester s LEFT JOIN FETCH s.subjects WHERE s.user.id = :userId ORDER BY s.semesterNumber ASC")
     List<Semester> findByUserIdWithSubjects(@Param("userId") UUID userId);
+    void deleteByUserId(UUID userId);
 }

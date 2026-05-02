@@ -210,8 +210,8 @@ export default function LoginModal({ closeModal }) {
               <form onSubmit={handleForgotStep1}>
                 <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>RESET PASSWORD</h2>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>ENTER YOUR REGISTERED EMAIL</p>
-                <div className="input-group">
-                  <input type="email" placeholder="EMAIL_ADDRESS" style={{ width: '100%' }} value={forgotData.email} onChange={e => handleForgotInput('email', e.target.value)} />
+                <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                  <input type="email" placeholder="EMAIL_ADDRESS" style={{ width: '100%', padding: '1.25rem' }} value={forgotData.email} onChange={e => handleForgotInput('email', e.target.value)} />
                 </div>
                 {globalError && <p style={{ color: 'var(--neon-red)', fontSize: '10px', marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>{globalError}</p>}
                 {successMsg && <p style={{ color: 'var(--neon-green)', fontSize: '10px', marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>{successMsg}</p>}
@@ -240,18 +240,18 @@ export default function LoginModal({ closeModal }) {
             {forgotStep === 3 && (
               <form onSubmit={handleForgotStep3}>
                 <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>SET NEW PASSWORD</h2>
-                <div className="input-group" style={{ position: 'relative' }}>
-                  <input type={showNewPassword ? "text" : "password"} placeholder="NEW PASSWORD" style={{ width: '100%' }} value={forgotData.newPassword} onChange={e => handleForgotInput('newPassword', e.target.value)} />
-                  <div style={{ position: 'absolute', right: '12px', top: '15px', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowNewPassword(!showNewPassword)}>
+                <div className="input-group" style={{ position: 'relative', marginBottom: '1.25rem' }}>
+                  <input type={showNewPassword ? "text" : "password"} placeholder="NEW PASSWORD" style={{ width: '100%', padding: '1.25rem' }} value={forgotData.newPassword} onChange={e => handleForgotInput('newPassword', e.target.value)} />
+                  <div style={{ position: 'absolute', right: '12px', top: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowNewPassword(!showNewPassword)}>
                     {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </div>
                 </div>
                 <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', marginBottom: '1.5rem', overflow: 'hidden' }}>
                     <div style={{ height: '100%', transition: 'all 0.3s', ...getPasswordStrength(forgotData.newPassword) }} />
                 </div>
-                <div className="input-group" style={{ position: 'relative' }}>
-                  <input type={showConfirmNewPassword ? "text" : "password"} placeholder="CONFIRM PASSWORD" style={{ width: '100%' }} value={forgotData.confirmNewPassword} onChange={e => handleForgotInput('confirmNewPassword', e.target.value)} />
-                  <div style={{ position: 'absolute', right: '12px', top: '15px', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}>
+                <div className="input-group" style={{ position: 'relative', marginBottom: '1.25rem' }}>
+                  <input type={showConfirmNewPassword ? "text" : "password"} placeholder="CONFIRM PASSWORD" style={{ width: '100%', padding: '1.25rem' }} value={forgotData.confirmNewPassword} onChange={e => handleForgotInput('confirmNewPassword', e.target.value)} />
+                  <div style={{ position: 'absolute', right: '12px', top: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}>
                     {showConfirmNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </div>
                 </div>
@@ -268,12 +268,12 @@ export default function LoginModal({ closeModal }) {
             <form onSubmit={handleSubmit}>
               {mode === 'signup' && (
                 <>
-                  <div className="input-group">
-                    <input type="text" name="name" placeholder="FULL NAME" style={{ width: '100%' }} value={formData.name} onChange={handleInput} />
+                  <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                    <input type="text" name="name" placeholder="FULL NAME" style={{ width: '100%', padding: '1.25rem' }} value={formData.name} onChange={handleInput} />
                     {errors.name && <p style={{ color: 'var(--neon-red)', fontSize: '10px', marginTop: '4px' }}>{errors.name}</p>}
                   </div>
-                  <div className="input-group">
-                    <select name="branch" style={{ width: '100%' }} value={formData.branch} onChange={handleInput}>
+                  <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                    <select name="branch" style={{ width: '100%', padding: '1.25rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', outline: 'none', borderRadius: '4px' }} value={formData.branch} onChange={handleInput}>
                       <option value="">SELECT BRANCH</option>
                       <option value="CSE">CSE</option>
                       <option value="AIML">AIML</option>
@@ -282,8 +282,8 @@ export default function LoginModal({ closeModal }) {
                     </select>
                     {errors.branch && <p style={{ color: 'var(--neon-red)', fontSize: '10px', marginTop: '4px' }}>{errors.branch}</p>}
                   </div>
-                  <div className="input-group">
-                    <select name="currentSemester" style={{ width: '100%' }} value={formData.currentSemester} onChange={handleInput}>
+                  <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                    <select name="currentSemester" style={{ width: '100%', padding: '1.25rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', outline: 'none', borderRadius: '4px' }} value={formData.currentSemester} onChange={handleInput}>
                       <option value="">SELECT SEMESTER</option>
                       {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>SEMESTER {n}</option>)}
                     </select>
@@ -293,13 +293,13 @@ export default function LoginModal({ closeModal }) {
               )}
 
               <div className="input-group">
-                <input type="email" name="email" placeholder="EMAIL ADDRESS" style={{ width: '100%' }} value={formData.email} onChange={handleInput} />
+                <input type="email" name="email" placeholder="EMAIL ADDRESS" style={{ width: '100%', padding: '1.25rem' }} value={formData.email} onChange={handleInput} />
                 {errors.email && <p style={{ color: 'var(--neon-red)', fontSize: '10px', marginTop: '4px' }}>{errors.email}</p>}
               </div>
 
               <div className="input-group" style={{ position: 'relative' }}>
-                <input type={showPassword ? "text" : "password"} name="password" placeholder="PASSWORD" style={{ width: '100%' }} value={formData.password} onChange={handleInput} />
-                <div style={{ position: 'absolute', right: '12px', top: '15px', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowPassword(!showPassword)}>
+                <input type={showPassword ? "text" : "password"} name="password" placeholder="PASSWORD" style={{ width: '100%', padding: '1.25rem' }} value={formData.password} onChange={handleInput} />
+                <div style={{ position: 'absolute', right: '12px', top: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </div>
                 {errors.password && <p style={{ color: 'var(--neon-red)', fontSize: '10px', marginTop: '4px' }}>{errors.password}</p>}

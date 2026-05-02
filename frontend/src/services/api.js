@@ -130,7 +130,11 @@ export const adminService = {
   getStats: () => API.get('/api/admin/stats'),
   getStudents: (params = {}) => API.get('/api/admin/students', { params }),
   getStudentDetail: (userId) => API.get(`/api/admin/students/${userId}`),
-  getWeakTopics: () => API.get('/api/admin/weak-topics')
+  getWeakTopics: () => API.get('/api/admin/weak-topics'),
+  getAdmins: () => API.get('/api/admin/manage/list'),
+  addAdmin: (data) => API.post('/api/admin/manage/add', data),
+  deleteAdmin: (id) => API.delete(`/api/admin/manage/${id}`),
+  deleteStudent: (id) => API.delete(`/api/admin/students/${id}`)
 };
 
 export const customQuizService = {

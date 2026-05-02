@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return currentUser?.role === 'ADMIN';
+    return currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
   };
 
   return (

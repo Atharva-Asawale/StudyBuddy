@@ -8,15 +8,15 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 );
 
 -- Note: The users table must have 'role' column already defined as per instruction
--- Insert ADMIN account (Password: password123, should be reset immediately via Forgot Password)
+-- Insert SUPER_ADMIN account (Password: password123, should be reset immediately via Forgot Password)
 INSERT INTO users (id, name, email, password_hash, branch, current_semester, role, created_at)
 VALUES (
   gen_random_uuid(),
-  'Admin',
-  'admin@studybuddy.com',
+  'Atharva Asawale',
+  'atharvaasawale2006@gmail.com',
   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJ1whIjyCca',
   'CSE', 
   1, 
-  'ADMIN', 
+  'SUPER_ADMIN', 
   NOW()
 );

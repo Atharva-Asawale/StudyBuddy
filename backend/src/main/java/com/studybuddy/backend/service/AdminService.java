@@ -4,6 +4,7 @@ import com.studybuddy.backend.dto.*;
 import com.studybuddy.backend.entity.*;
 import com.studybuddy.backend.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,10 @@ public class AdminService {
     private final StudentProfileRepository studentProfileRepository;
     private final AcademicBaselineRepository academicBaselineRepository;
     private final SemesterRepository semesterRepository;
+    private final DailyActivityLogRepository dailyActivityLogRepository;
+    private final UserStreakRepository userStreakRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminStatsResponse getPlatformStats() {
         long totalStudents = userRepository.countByRole("STUDENT");
@@ -263,5 +268,87 @@ public class AdminService {
                 .sorted(Comparator.comparingDouble(WeakTopicDTO::getAvgScore))
                 .limit(10)
                 .collect(Collectors.toList());
+    }
+
+    public List<AdminUserDTO> getAllAdmins() {
+        List<User> admins = userRepository.findByRole("ADMIN");
+        List<User> superAdmins = userRepository.findByRole("SUPER_ADMIN");
+        
+        List<User> allAdmins = new ArrayList<>(admins);
+        allAdmins.addAll(superAdmins);
+        
+        return allAdmins.stream()
+                .map(this::mapToAdminUserDTO)
+                .collect(Collectors.toList());
+    }
+
+    private AdminUserDTO mapToAdminUserDTO(User user) {
+        AdminUserDTO dto = new AdminUserDTO();
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+        dto.setRole(user.getRole());
+        dto.setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "Recent");
+        return dto;
+    }
+
+    @Transactional
+    public void createAdmin(AdminManagementDTO dto) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+        
+        User user = new User();
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        user.setRole("ADMIN"); // New admins are always regular ADMINs
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteAdmin(UUID adminId) {
+        User user = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        if ("SUPER_ADMIN".equals(user.getRole())) {
+            throw new RuntimeException("Cannot delete Super Admin");
+        }
+        
+        // Cleanup related data
+        dailyActivityLogRepository.deleteByUserId(adminId);
+        userStreakRepository.deleteByUserId(adminId);
+        passwordResetTokenRepository.deleteByEmail(user.getEmail());
+        
+        userRepository.delete(user);
+    }
+
+    @Transactional
+    public void deleteStudent(UUID studentId) {
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        
+        if (!"STUDENT".equals(user.getRole())) {
+            throw new RuntimeException("User is not a student");
+        }
+
+        // Cleanup everything
+        dailyActivityLogRepository.deleteByUserId(studentId);
+        userStreakRepository.deleteByUserId(studentId);
+        passwordResetTokenRepository.deleteByEmail(user.getEmail());
+        
+        quizResultRepository.deleteByUserId(studentId);
+        customTestRepository.deleteByUserId(studentId);
+        topicProgressRepository.deleteByUserId(studentId);
+        semesterRepository.deleteByUserId(studentId);
+        
+        // Custom syllabus nodes created by the student
+        syllabusNodeRepository.deleteByCreatedById(studentId);
+        
+        // Profiles
+        studentProfileRepository.deleteById(studentId);
+        academicBaselineRepository.deleteById(studentId);
+        
+        userRepository.delete(user);
     }
 }

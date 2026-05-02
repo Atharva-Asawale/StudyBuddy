@@ -86,8 +86,8 @@ export default function AdminStudents() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               style={{
-                background: '#000000',
-                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '8px',
                 padding: '10px 12px 10px 40px',
                 color: 'white',
@@ -96,7 +96,7 @@ export default function AdminStudents() {
                 transition: 'border 0.2s'
               }}
               onFocus={(e) => e.target.style.borderColor = '#818cf8'}
-              onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.2)'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
             />
           </div>
 

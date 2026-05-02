@@ -40,4 +40,5 @@ public interface SyllabusNodeRepository extends JpaRepository<SyllabusNode, UUID
     );
 
     List<SyllabusNode> findByBranchAndType(String branch, String type);
+    void deleteByCreatedById(UUID userId);
 }

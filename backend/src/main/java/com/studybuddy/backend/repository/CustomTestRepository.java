@@ -14,4 +14,5 @@ public interface CustomTestRepository extends JpaRepository<CustomTest, UUID> {
     List<CustomTest> findByUserIdOrderByCreatedAtAsc(UUID userId);
     long countByUserId(UUID userId);
     Optional<CustomTest> findFirstByUserIdOrderByCreatedAtAsc(UUID userId);
+    void deleteByUserId(UUID userId);
 }

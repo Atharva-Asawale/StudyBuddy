@@ -61,7 +61,7 @@ export default function AdminLogin() {
       });
 
       const { token, ...userData } = response.data;
-      if (userData.role !== 'ADMIN') {
+      if (userData.role !== 'ADMIN' && userData.role !== 'SUPER_ADMIN') {
         setGlobalError('ACCESS DENIED: ADMIN PRIVILEGES REQUIRED.');
         return;
       }
@@ -189,8 +189,8 @@ export default function AdminLogin() {
               {forgotStep === 1 && (
                 <form onSubmit={handleForgotStep1}>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '12px', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>ENTER ADMIN EMAIL FOR OTP</p>
-                  <div className="input-group">
-                    <input type="email" placeholder="EMAIL" style={{ width: '100%' }} value={forgotData.email} onChange={e => handleForgotInput('email', e.target.value)} />
+                  <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                    <input type="email" placeholder="EMAIL" style={{ width: '100%', padding: '1.25rem' }} value={forgotData.email} onChange={e => handleForgotInput('email', e.target.value)} />
                   </div>
                   {globalError && <p style={{ color: 'var(--neon-red)', fontSize: '11px', marginBottom: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>{globalError}</p>}
                   <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? <MiniLoader /> : 'SEND OTP'}</button>
@@ -216,18 +216,18 @@ export default function AdminLogin() {
 
               {forgotStep === 3 && (
                 <form onSubmit={handleForgotStep3}>
-                  <div className="input-group" style={{ position: 'relative' }}>
-                    <input type={showNewPassword ? "text" : "password"} placeholder="NEW PASSWORD" style={{ width: '100%' }} value={forgotData.newPassword} onChange={e => handleForgotInput('newPassword', e.target.value)} />
-                    <div style={{ position: 'absolute', right: '15px', top: '15px', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowNewPassword(!showNewPassword)}>
+                  <div className="input-group" style={{ position: 'relative', marginBottom: '1.25rem' }}>
+                    <input type={showNewPassword ? "text" : "password"} placeholder="NEW PASSWORD" style={{ width: '100%', padding: '1.25rem' }} value={forgotData.newPassword} onChange={e => handleForgotInput('newPassword', e.target.value)} />
+                    <div style={{ position: 'absolute', right: '15px', top: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowNewPassword(!showNewPassword)}>
                       {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </div>
                   </div>
                   <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', marginBottom: '1.5rem', overflow: 'hidden' }}>
                     <div style={{ height: '100%', transition: 'all 0.3s', ...getPasswordStrength(forgotData.newPassword) }} />
                   </div>
-                  <div className="input-group" style={{ position: 'relative' }}>
-                    <input type={showConfirmNewPassword ? "text" : "password"} placeholder="CONFIRM PASSWORD" style={{ width: '100%' }} value={forgotData.confirmNewPassword} onChange={e => handleForgotInput('confirmNewPassword', e.target.value)} />
-                    <div style={{ position: 'absolute', right: '15px', top: '15px', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}>
+                  <div className="input-group" style={{ position: 'relative', marginBottom: '1.25rem' }}>
+                    <input type={showConfirmNewPassword ? "text" : "password"} placeholder="CONFIRM PASSWORD" style={{ width: '100%', padding: '1.25rem' }} value={forgotData.confirmNewPassword} onChange={e => handleForgotInput('confirmNewPassword', e.target.value)} />
+                    <div style={{ position: 'absolute', right: '15px', top: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}>
                       {showConfirmNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </div>
                   </div>

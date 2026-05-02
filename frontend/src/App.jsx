@@ -20,6 +20,7 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminStudents from './pages/admin/AdminStudents';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminManage from './pages/admin/AdminManage';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -99,6 +100,9 @@ function AppContent() {
         } />
         <Route path="/admin/analytics" element={
           <AdminProtectedRoute><AdminLayout><AdminAnalytics /></AdminLayout></AdminProtectedRoute>
+        } />
+        <Route path="/admin/manage" element={
+          <AdminProtectedRoute><AdminLayout><AdminManage /></AdminLayout></AdminProtectedRoute>
         } />
 
         <Route path="/onboarding" element={

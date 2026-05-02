@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Users, BarChart2, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, LogOut, ShieldCheck } from 'lucide-react';
 import Iridescence from '../components/Iridescence';
 
 export default function AdminLayout({ children }) {
@@ -17,6 +17,7 @@ export default function AdminLayout({ children }) {
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Students', path: '/admin/students', icon: Users },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart2 },
+    { name: 'Manage', path: '/admin/manage', icon: ShieldCheck },
   ];
 
   return (

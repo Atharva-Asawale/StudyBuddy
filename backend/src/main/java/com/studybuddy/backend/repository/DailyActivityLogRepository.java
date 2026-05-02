@@ -13,4 +13,5 @@ import java.util.UUID;
 public interface DailyActivityLogRepository extends JpaRepository<DailyActivityLog, UUID> {
     List<DailyActivityLog> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
     boolean existsByUserAndDate(User user, LocalDate date);
+    void deleteByUserId(UUID userId);
 }

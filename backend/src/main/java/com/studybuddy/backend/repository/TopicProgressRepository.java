@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface TopicProgressRepository extends JpaRepository<TopicProgress, UUID> {
     List<TopicProgress> findByUser(User user);
     Optional<TopicProgress> findByUserAndTopic(User user, SyllabusNode topic);
+    void deleteByUserId(UUID userId);
 }

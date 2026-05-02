@@ -20,7 +20,6 @@ public class SWOTService {
     private final SemesterRepository semesterRepository;
     private final SyllabusNodeRepository syllabusNodeRepository;
     private final GeminiService geminiService;
-    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public SWOTResponseDTO generateSWOT(User user) {

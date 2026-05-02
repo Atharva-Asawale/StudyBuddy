@@ -8,7 +8,7 @@ import com.studybuddy.backend.dto.SwotAnalysisDTO;
 import com.studybuddy.backend.dto.LearningDebtGraphDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +19,8 @@ public class GeminiService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    private final WebClient webClient = WebClient.builder()
+    private final RestClient restClient = RestClient.builder()
             .baseUrl("https://generativelanguage.googleapis.com")
-            .codecs(config -> config.defaultCodecs().maxInMemorySize(2 * 1024 * 1024))
             .build();
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -41,14 +40,13 @@ public class GeminiService {
         for (String model : MODELS) {
             try {
                 System.out.println("Trying model: " + model);
-                String response = webClient.post()
+                String response = restClient.post()
                         .uri("/v1beta/models/" + model + ":generateContent")
                         .header("Content-Type", "application/json")
                         .header("x-goog-api-key", apiKey)
-                        .bodyValue(requestBody)
+                        .body(requestBody)
                         .retrieve()
-                        .bodyToMono(String.class)
-                        .block();
+                        .body(String.class);
 
                 List<QuizQuestionDTO> questions = parseQuestions(response);
                 if (questions != null && !questions.isEmpty()) {
@@ -142,14 +140,13 @@ public class GeminiService {
 
         for (String model : MODELS) {
             try {
-                String response = webClient.post()
+                String response = restClient.post()
                         .uri("/v1beta/models/" + model + ":generateContent")
                         .header("Content-Type", "application/json")
                         .header("x-goog-api-key", apiKey)
-                        .bodyValue(requestBody)
+                        .body(requestBody)
                         .retrieve()
-                        .bodyToMono(String.class)
-                        .block();
+                        .body(String.class);
 
                 JsonNode root = mapper.readTree(response);
                 return root.path("candidates").get(0)

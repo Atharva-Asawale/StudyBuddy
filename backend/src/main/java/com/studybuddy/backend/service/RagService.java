@@ -1,6 +1,5 @@
 package com.studybuddy.backend.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
@@ -15,7 +14,6 @@ import java.util.stream.Collectors;
 @Service
 public class RagService {
 
-    private final ObjectMapper mapper = new ObjectMapper();
 
     private static final Set<String> STOPWORDS = new HashSet<>(Arrays.asList(
         "a", "an", "the", "and", "or", "but", "if", "then", "else", "when", "at", "from", "by", "for", "with", "about", "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "up", "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "can", "will", "just", "should", "now", "chapter", "section", "page", "figure", "table", "example", "exercise", "problem", "solution", "university", "department", "professor", "edition", "copyright", "all", "rights", "reserved"
@@ -30,8 +28,8 @@ public class RagService {
                 return stripper.getText(doc);
             }
         } else if (filename.endsWith(".docx") || filename.endsWith(".doc")) {
-            try (XWPFDocument doc = new XWPFDocument(file.getInputStream())) {
-                XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
+            try (XWPFDocument doc = new XWPFDocument(file.getInputStream());
+                 XWPFWordExtractor extractor = new XWPFWordExtractor(doc)) {
                 return extractor.getText();
             }
         } else {

@@ -8,16 +8,13 @@ import com.studybuddy.backend.dto.SwotAnalysisDTO;
 import com.studybuddy.backend.dto.TopicPerformanceDTO;
 import com.studybuddy.backend.entity.CustomTest;
 import com.studybuddy.backend.entity.QuizResult;
-import com.studybuddy.backend.entity.SyllabusNode;
 import com.studybuddy.backend.entity.User;
 import com.studybuddy.backend.repository.CustomTestRepository;
 import com.studybuddy.backend.repository.QuizResultRepository;
-import com.studybuddy.backend.repository.SyllabusNodeRepository;
 import com.studybuddy.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,7 +24,6 @@ public class StudentAnalyticsService {
 
     private final QuizResultRepository quizResultRepository;
     private final CustomTestRepository customTestRepository;
-    private final SyllabusNodeRepository syllabusNodeRepository;
     private final UserRepository userRepository;
     private final GeminiService geminiService;
 

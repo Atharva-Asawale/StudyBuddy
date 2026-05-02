@@ -1,7 +1,6 @@
 package com.studybuddy.backend.repository;
 
 import com.studybuddy.backend.entity.QuizResult;
-import com.studybuddy.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -69,8 +69,8 @@ export default function StudentDetailDrawer({ userId, onClose }) {
             <>
               {/* Badges */}
               <div style={{ display: 'flex', gap: '8px' }}>
-                <span style={{ padding: '4px 12px', background: 'rgba(129, 140, 248, 0.1)', color: '#818cf8', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>{student.branch}</span>
-                <span style={{ padding: '4px 12px', background: 'rgba(192, 132, 252, 0.1)', color: '#c084fc', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>Semester {student.currentSemester}</span>
+                <span style={{ padding: '6px 16px', background: 'rgba(129, 140, 248, 0.1)', color: '#818cf8', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold' }}>{student.branch}</span>
+                <span style={{ padding: '6px 16px', background: 'rgba(192, 132, 252, 0.1)', color: '#c084fc', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold' }}>Semester {student.currentSemester}</span>
               </div>
 
               {/* Quick Stats */}
@@ -80,7 +80,7 @@ export default function StudentDetailDrawer({ userId, onClose }) {
                   <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#22c55e' }}>{student.latestCgpa ? student.latestCgpa.toFixed(2) : 'N/A'}</div>
                 </div>
                 <div style={{ padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Quizzes</div>
+                  <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', fontWeight: 'bold', marginBottom: '4px' }}>Quizzes</div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#3b82f6' }}>{student.totalQuizzes}</div>
                 </div>
                 <div style={{ padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>

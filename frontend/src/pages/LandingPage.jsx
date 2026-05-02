@@ -1,11 +1,20 @@
 import { Link } from 'react-router-dom';
+import { ArrowDown } from 'lucide-react';
 
 export default function LandingPage({ openLogin }) {
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth'
+    });
+  };
+
   return (
-    <div className="landing-container page-enter" style={{ width: '100%' }}>
+    <div className="landing-container page-enter" style={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <nav className="navbar glass-panel" style={{ 
         margin: '0', 
         width: '100%', 
+        flexShrink: 0,
         borderRadius: '0', 
         padding: '1.5rem 5%', 
         display: 'flex', 
@@ -14,8 +23,7 @@ export default function LandingPage({ openLogin }) {
         borderTop: 'none',
         borderLeft: 'none',
         borderRight: 'none',
-        position: 'sticky',
-        top: 0,
+        position: 'relative',
         zIndex: 1000
       }}>
         <h2 className="logo" style={{ fontSize: '1.8rem', margin: 0, color: 'var(--text-primary)', letterSpacing: '0.1em' }}>STUDYBUDDY</h2>
@@ -34,7 +42,8 @@ export default function LandingPage({ openLogin }) {
         </div>
       </nav>
 
-      <section className="hero" style={{ marginTop: '160px', padding: '0 5%' }}>
+      <div className="landing-scroll-area" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth' }}>
+        <section className="hero" style={{ marginTop: '80px', padding: '0 5%' }}>
         <h1 style={{ 
           fontSize: 'clamp(2.5rem, 6vw, 5rem)', 
           lineHeight: 1.1, 
@@ -62,13 +71,55 @@ export default function LandingPage({ openLogin }) {
           TRACK PERFORMANCE, DETECT CONCEPT WEAKNESSES, GENERATE AUTOMATED SWOT ANALYSIS, 
           AND VISUALIZE YOUR LEARNING DEBT.
         </p>
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4rem' }}>
           <button className="btn-primary" style={{ padding: '18px 56px', fontSize: '16px' }} onClick={openLogin}>GET STARTED FREE</button>
+        </div>
+
+        {/* Relative Scroll to Bottom Button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-2.5rem', marginRight: '5%' }}>
+          <button 
+            onClick={() => {
+              const scrollArea = document.querySelector('.landing-scroll-area');
+              if (scrollArea) {
+                scrollArea.scrollTo({
+                  top: scrollArea.scrollHeight,
+                  behavior: 'smooth'
+                });
+              }
+            }}
+            style={{
+              position: 'relative',
+              width: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              background: 'var(--card-bg)',
+              border: '2px solid var(--neon-cyan)',
+              color: 'var(--neon-cyan)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 10,
+              boxShadow: 'var(--glow-cyan)',
+              transition: 'all 0.3s ease',
+              animation: 'bounce 2s infinite'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'var(--neon-cyan)';
+              e.currentTarget.style.color = 'var(--bg-base)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'var(--card-bg)';
+              e.currentTarget.style.color = 'var(--neon-cyan)';
+            }}
+          >
+            <ArrowDown size={24} />
+          </button>
         </div>
       </section>
 
       <section className="features" style={{ 
-        marginTop: '150px', 
+        marginTop: '100px', 
         gap: '32px',
         display: 'flex',
         flexWrap: 'wrap',
@@ -118,6 +169,7 @@ export default function LandingPage({ openLogin }) {
         <div style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.3em', fontSize: '14px', color: 'var(--neon-pink)', marginBottom: '20px', fontWeight: '800' }}>DEVELOPED BY TEAM STUDYBUDDY</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--neon-cyan)', letterSpacing: '0.1em' }}>© 2026 ALL RIGHTS RESERVED | SYSTEM STATUS: OPTIMAL</div>
       </footer>
+      </div>
     </div>
   );
 }

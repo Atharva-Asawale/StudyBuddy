@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { addSemester, deleteSemester, getSemesters, updateSemester } from '../services/api';
 import GameLoader from '../components/GameLoader';
 import MiniLoader from '../components/MiniLoader';
+import { customAlert, customConfirm } from '../utils/alert';
 import {
   Bar,
   BarChart,
@@ -214,7 +215,10 @@ export default function Progress() {
     }
   };
 
-  const handleEdit = (semester) => {
+  const handleEdit = async (semester) => {
+    const confirmed = await customConfirm('Are you sure you want to edit this semester?');
+    if (!confirmed) return;
+
     setEditingId(semester.id);
     setForm({
       semesterNumber: String(semester.semesterNumber),
@@ -230,7 +234,9 @@ export default function Progress() {
 
   const handleDelete = async (semesterId) => {
     const target = semesters.find((sem) => sem.id === semesterId);
-    if (!target || !window.confirm('Are you sure you want to delete this semester?')) return;
+    if (!target) return;
+    const confirmed = await customConfirm('Are you sure you want to delete this semester?');
+    if (!confirmed) return;
 
     setDeletingId(semesterId);
     try {
@@ -241,7 +247,7 @@ export default function Progress() {
         await refreshSemesters('keep');
       }
     } catch {
-      window.alert('Failed to delete semester.');
+      await customAlert('Failed to delete semester.');
     } finally {
       setDeletingId(null);
     }
@@ -253,18 +259,27 @@ export default function Progress() {
     <DashboardLayout>
       <div className="page-enter" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
         
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '2.2rem', color: 'var(--text-primary)' }}>ACADEMIC PROGRESS</h1>
-          <button 
-            className={showForm ? "btn-ghost" : "btn-primary"}
-            onClick={() => (showForm ? setShowForm(false) : openAddModal())}
-          >
-            {showForm ? 'CLOSE FORM' : '+ ADD SEMESTER'}
-          </button>
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <h1 style={{ fontSize: '2.5rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>ACADEMIC PROGRESS</h1>
+          <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-cyan)', fontSize: '14px', letterSpacing: '0.2em' }}>
+            PERFORMANCE TRACKING // SEMESTER ANALYTICS
+          </div>
         </div>
 
         {showForm && (
-          <div className="glass-panel" style={{ marginBottom: '2rem', padding: '2rem' }}>
+          <div className="glass-panel" style={{ marginBottom: '2rem', padding: '2rem', position: 'relative' }}>
+            <button 
+              onClick={() => setShowForm(false)}
+              style={{
+                position: 'absolute', top: '1.5rem', right: '1.5rem',
+                background: 'transparent', border: 'none', color: 'var(--text-muted)',
+                cursor: 'pointer', transition: 'color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'var(--neon-red)'}
+              onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
+            >
+              CLOSE [X]
+            </button>
             <h3 style={{ fontSize: '11px', color: 'var(--neon-pink)', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>
               {editingId ? 'UPDATE SEMESTER' : 'ADD NEW SEMESTER'}
             </h3>
@@ -328,8 +343,26 @@ export default function Progress() {
           </div>
         ) : (
           <>
+            <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div style={{ textAlign: 'left' }}>
+                <h1 style={{ fontSize: '2rem', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>PERFORMANCE ANALYTICS</h1>
+                <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-gold)', fontSize: '12px', letterSpacing: '0.1em' }}>
+                  ACADEMIC TRACKING // SEMESTER RECORDS
+                </div>
+              </div>
+              {!showForm && (
+                <button 
+                  className="btn-primary"
+                  onClick={openAddModal}
+                  style={{ padding: '12px 24px', fontSize: '12px' }}
+                >
+                  + ADD SEMESTER
+                </button>
+              )}
+            </div>
+
             {/* Semester Tabs */}
-            <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1rem', borderRadius: '999px' }}>
+            <div className="glass-panel" style={{ marginBottom: '1rem', padding: '0.75rem', borderRadius: '999px' }}>
               <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', padding: '4px', justifyContent: 'center' }}>
                 {semesters.map((sem) => {
                   const active = sem.id === selectedSemesterId;
@@ -353,7 +386,7 @@ export default function Progress() {
               </div>
             </div>
 
-            <div key={selectedSemesterId || 'content'} style={{ display: 'grid', gap: '2rem' }}>
+            <div key={selectedSemesterId || 'content'} style={{ display: 'grid', gap: '1rem' }}>
               {/* Quick Stats Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                 {[

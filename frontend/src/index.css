@@ -61,6 +61,24 @@ body {
   font-size: 16px;
 }
 
+/* --- CUSTOM SCROLLBAR --- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.3);
+  border-radius: 10px;
+  border: 2px solid var(--bg-base);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-cyan);
+}
+
 /* CRT EFFECTS REMOVED PER USER REQUEST */
 
 /* --- NEON VIGNETTE --- */
@@ -299,4 +317,58 @@ input:focus, select:focus, textarea:focus {
   box-shadow: var(--glow-pink);
   width: 0%;
   transition: width 0.1s linear;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* --- LANDING PAGE SCROLLBAR --- */
+.landing-scroll-area::-webkit-scrollbar {
+  width: 16px;
+}
+.landing-scroll-area::-webkit-scrollbar-track {
+  background: var(--bg-base);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+.landing-scroll-area::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 4px solid var(--bg-base);
+  border-radius: 8px;
+}
+.landing-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #e2e8f0;
+}
+.landing-scroll-area::-webkit-scrollbar-button:single-button {
+  background-color: var(--bg-base);
+  display: block;
+  border-style: solid;
+  height: 16px;
+  width: 16px;
+}
+/* Up arrow */
+.landing-scroll-area::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-width: 0 8px 8px 8px;
+  border-color: transparent transparent #ffffff transparent;
+}
+.landing-scroll-area::-webkit-scrollbar-button:single-button:vertical:decrement:hover {
+  border-color: transparent transparent var(--neon-cyan) transparent;
+}
+/* Down arrow */
+.landing-scroll-area::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-width: 8px 8px 0 8px;
+  border-color: #ffffff transparent transparent transparent;
+}
+.landing-scroll-area::-webkit-scrollbar-button:single-button:vertical:increment:hover {
+  border-color: var(--neon-cyan) transparent transparent transparent;
+}
+@keyframes neonPulse {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.2); }
+}
+
+@keyframes streakGlow {
+  0%, 100% { box-shadow: 0 0 20px var(--neon-green), inset 0 0 10px rgba(0, 255, 100, 0.2); }
+  50% { box-shadow: 0 0 40px var(--neon-green), inset 0 0 20px rgba(0, 255, 100, 0.4); }
 }

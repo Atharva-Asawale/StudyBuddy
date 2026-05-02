@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { streakService } from '../services/api';
 
 const glass = {
-  background: 'rgba(15, 15, 40, 0.6)',
+  background: 'rgba(5, 40, 10, 0.75)', // Solid dark green, 75% opaque
   backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  border: '2px solid var(--neon-green)',
   borderRadius: '16px',
   padding: '1.5rem',
   transition: 'all 0.3s ease',
+  animation: 'streakGlow 3s ease-in-out infinite'
 };
 
 export default function StreakCard() {
@@ -59,7 +60,7 @@ export default function StreakCard() {
           fontSize: '3rem', fontWeight: 'bold', display: 'inline-block',
           background: 'linear-gradient(to right, #fb923c, #ef4444)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          textShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          textShadow: '0 4px 10px rgba(251, 146, 60, 0.3)'
         }}>
           {streakData.currentStreak}
         </div>
@@ -82,7 +83,8 @@ export default function StreakCard() {
                 style={{
                   width: '12px', height: '12px', borderRadius: '2px',
                   background: isActive ? '#f97316' : 'rgba(255,255,255,0.1)',
-                  boxShadow: isActive ? '0 0 5px rgba(249,115,22,0.5)' : 'none'
+                  boxShadow: isActive ? '0 0 8px #f97316' : 'none',
+                  animation: isActive ? 'neonPulse 2s ease infinite' : 'none'
                 }}
                 title={dateStr}
               />

@@ -85,7 +85,7 @@ export default function Performance() {
   return (
     <DashboardLayout>
       <div className="page-enter" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
-        <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
+        <header style={{ marginBottom: '1rem', textAlign: 'center' }}>
           <h1 style={{ fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>PERFORMANCE HEATMAP</h1>
           <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-cyan)', fontSize: '12px', letterSpacing: '0.2em' }}>
             KNOWLEDGE COMPREHENSION MATRIX

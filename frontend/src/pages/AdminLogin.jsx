@@ -193,7 +193,7 @@ export default function AdminLogin() {
                     <input type="email" placeholder="EMAIL" style={{ width: '100%', padding: '1.25rem' }} value={forgotData.email} onChange={e => handleForgotInput('email', e.target.value)} />
                   </div>
                   {globalError && <p style={{ color: 'var(--neon-red)', fontSize: '11px', marginBottom: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>{globalError}</p>}
-                  <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? <MiniLoader /> : 'SEND OTP'}</button>
+                  <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? 'VALIDATING...' : 'SEND OTP'}</button>
                   <p style={{ textAlign: 'center', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)', letterSpacing: '0.1em' }} onClick={() => setMode('signin')}>BACK TO LOGIN</p>
                 </form>
               )}
@@ -207,7 +207,7 @@ export default function AdminLogin() {
                     ))}
                   </div>
                   {globalError && <p style={{ color: 'var(--neon-red)', fontSize: '11px', marginBottom: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>{globalError}</p>}
-                  <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? <MiniLoader /> : 'VERIFY CODE'}</button>
+                  <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? 'VALIDATING...' : 'VERIFY CODE'}</button>
                   <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                     <span style={{ cursor: resendTimer === 0 ? 'pointer' : 'default', color: resendTimer === 0 ? 'var(--neon-gold)' : 'var(--text-muted)' }} onClick={resendTimer === 0 ? handleForgotStep1 : undefined}>RESEND OTP</span> {resendTimer > 0 && `(WAIT ${resendTimer}S)`}
                   </p>
@@ -233,7 +233,7 @@ export default function AdminLogin() {
                   </div>
                   {globalError && <p style={{ color: 'var(--neon-red)', fontSize: '11px', marginBottom: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>{globalError}</p>}
                   {successMsg && <p style={{ color: 'var(--neon-green)', fontSize: '11px', marginBottom: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>{successMsg}</p>}
-                  <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>{loading ? <MiniLoader /> : 'UPDATE PASSWORD'}</button>
+                  <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>{loading ? 'VALIDATING...' : 'UPDATE PASSWORD'}</button>
                 </form>
               )}
             </div>
@@ -256,7 +256,7 @@ export default function AdminLogin() {
               </div>
 
               <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '1.25rem', fontSize: '16px' }}>
-                {loading ? <MiniLoader /> : 'LOGIN'}
+                {loading ? 'VALIDATING...' : 'LOGIN'}
               </button>
             </form>
           )}

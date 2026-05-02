@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import GameLoader from '../components/GameLoader';
 import MiniLoader from '../components/MiniLoader';
+import { customAlert, customConfirm } from '../utils/alert';
+
 
 const typeConfig = {
   SUBJECT: { icon: '📘', color: 'var(--neon-purple)', bg: 'rgba(129,140,248,0.1)', border: 'rgba(129,140,248,0.3)' },
@@ -38,7 +40,7 @@ function AddNodeForm({ parentId, parentType, branch, semester, onSave, onCancel 
       });
       onSave();
     } catch (err) {
-      alert('Failed to add. Please try again.');
+      await customAlert('Failed to add. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -88,19 +90,20 @@ function TreeNode({ node, depth = 0, onRefresh }) {
       setEditing(false);
       onRefresh();
     } catch (err) {
-      alert('Failed to edit.');
+      await customAlert('Failed to edit.');
     } finally {
       setSaving(false);
     }
   };
   const navigate = useNavigate();
   const handleDelete = async () => {
-    if (!window.confirm(`Delete "${node.name}"?`)) return;
+    const confirmed = await customConfirm(`Delete "${node.name}"?`);
+    if (!confirmed) return;
     try {
       await syllabusService.deleteCustomNode(node.id);
       onRefresh();
     } catch (err) {
-      alert('Failed to delete.');
+      await customAlert('Failed to delete.');
     }
   };
 
@@ -148,9 +151,9 @@ function TreeNode({ node, depth = 0, onRefresh }) {
           <span
             onClick={() => setOpen(!open)}
             style={{
-              flex: 1, fontSize: depth === 0 ? '14px' : '13px',
-              color: depth === 0 ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontWeight: depth === 0 ? 700 : 500,
+              flex: 1, fontSize: depth === 0 ? '16px' : '15px',
+              color: depth === 0 ? 'var(--text-primary)' : 'rgba(255,255,255,0.9)',
+              fontWeight: depth === 0 ? 800 : 700,
               fontFamily: 'var(--font-ui)',
               letterSpacing: '0.02em'
             }}
@@ -338,18 +341,18 @@ export default function Syllabus() {
     <DashboardLayout>
       <div className="page-enter">
         {/* Header */}
-        <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
+        <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
           <h1 style={{ fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>SYLLABUS</h1>
-          <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-pink)', fontSize: '12px', letterSpacing: '0.2em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-pink)', fontSize: '18px', letterSpacing: '0.2em', fontWeight: 'bold' }}>
             BRANCH: {currentUser?.branch?.toUpperCase() || 'UNKNOWN'}
           </div>
 
           {/* Legend */}
           <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
             {Object.entries(typeConfig).map(([type, { color, icon }]) => (
-              <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                <span style={{ fontSize: '12px' }}>{icon}</span>
-                <span style={{ color, fontWeight: 800 }}>{type}</span>
+              <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '14px', color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
+                <span style={{ fontSize: '18px' }}>{icon}</span>
+                <span style={{ color, fontWeight: 900 }}>{type}</span>
               </div>
             ))}
           </div>

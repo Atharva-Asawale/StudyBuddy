@@ -8,6 +8,7 @@ import {
   ChevronRight, ChevronLeft, CheckCircle, AlertCircle,
   Trash2, BarChart2, Check, ArrowRight
 } from 'lucide-react';
+import { customConfirm } from '../utils/alert';
 
 export default function CustomTest() {
   const [state, setState] = useState('setup'); // setup, loading, quiz, result
@@ -131,7 +132,8 @@ export default function CustomTest() {
 
   const handleDeleteHistory = async (id, e) => {
     e.stopPropagation();
-    if (!window.confirm("Delete this test from history?")) return;
+    const confirmed = await customConfirm("Delete this test from history?");
+    if (!confirmed) return;
     try {
       await customQuizService.deleteHistory(id);
       setHistory(prev => prev.filter(item => item.id !== id));
@@ -146,7 +148,7 @@ export default function CustomTest() {
 
   return (
     <DashboardLayout>
-      <div className="page-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="page-enter" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
         {state === 'setup' && (
           <div>
             <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
@@ -266,7 +268,7 @@ export default function CustomTest() {
         )}
 
         {state === 'quiz' && (
-          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)' }}>{topicName.toUpperCase()}</h2>
@@ -314,7 +316,7 @@ export default function CustomTest() {
         )}
 
         {state === 'result' && result && (
-          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
             <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem', marginBottom: '2rem', borderTop: `4px solid ${result.percentage >= 70 ? 'var(--neon-green)' : result.percentage >= 40 ? 'var(--neon-gold)' : 'var(--neon-red)'}` }}>
                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '1rem', letterSpacing: '0.3em' }}>QUIZ COMPLETED</div>
               <div style={{ fontSize: '6rem', fontWeight: 800, color: result.percentage >= 70 ? 'var(--neon-green)' : result.percentage >= 40 ? 'var(--neon-gold)' : 'var(--neon-red)', lineHeight: 1, marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>{result.percentage}%</div>

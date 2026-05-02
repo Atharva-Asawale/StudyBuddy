@@ -63,14 +63,14 @@ export default function AdminStudents() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       
       {/* Header Row */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', textAlign: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
             Students
-            <span style={{ fontSize: '0.9rem', background: 'rgba(129, 140, 248, 0.1)', color: '#818cf8', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(129, 140, 248, 0.2)' }}>
+            <span style={{ fontSize: '1.1rem', background: 'rgba(129, 140, 248, 0.1)', color: '#818cf8', padding: '4px 12px', borderRadius: '12px', border: '1px solid rgba(129, 140, 248, 0.3)', fontWeight: 'bold' }}>
               {filteredStudents.length} {filteredStudents.length === 1 ? 'record' : 'records'}
             </span>
           </h2>

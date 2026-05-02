@@ -6,6 +6,7 @@ import GameLoader from '../components/GameLoader';
 import CountUp from '../components/CountUp';
 import CyberNotification from '../components/CyberNotification';
 import { CheckCircle, Plus, Minus, Sparkles, ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
+import { customAlert } from '../utils/alert';
 
 export default function Quiz() {
   const { topicId, topicName } = useParams();
@@ -56,7 +57,7 @@ export default function Quiz() {
 
   const handleSubmit = async () => {
     if (Object.keys(selected).length < questions.length) {
-      alert('Please answer all questions before submitting!');
+      await customAlert('Please answer all questions before submitting!');
       return;
     }
     setSubmitting(true);
@@ -200,7 +201,7 @@ export default function Quiz() {
             onComplete={() => setShowNotification(false)}
           />
         )}
-        <div className="page-enter" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <div className="page-enter" style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div className="glass-panel" style={{ textAlign: 'center', marginBottom: '2rem', padding: '3rem', borderTop: `4px solid ${color}` }}>
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '1rem', letterSpacing: '0.3em' }}>QUIZ SUMMARY</div>
             <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: '2rem' }}>{decodedName.toUpperCase()}</h2>
@@ -284,7 +285,7 @@ export default function Quiz() {
 
   return (
     <DashboardLayout noSidebar={true}>
-      <div className="page-enter" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <div className="page-enter" style={{ maxWidth: '1400px', margin: '0 auto' }}>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div>
@@ -324,7 +325,7 @@ export default function Quiz() {
         <div className="glass-panel" style={{ padding: '3rem', marginBottom: '2rem', position: 'relative' }}>
           <div style={{ position: 'absolute', top: -12, left: 30, background: 'var(--bg-base)', padding: '0 10px', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>QUESTION {String(current + 1).padStart(2, '0')}</div>
           
-          <p style={{ fontSize: '1.6rem', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '3rem', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '1.6rem', fontWeight: 600, color: '#ffffff', textAlign: 'center', marginBottom: '3rem', lineHeight: 1.5 }}>
             {q.question}
           </p>
 
@@ -349,7 +350,7 @@ export default function Quiz() {
                   }}>
                     {['A', 'B', 'C', 'D'][oi]}
                   </div>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{opt}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff' }}>{opt}</span>
                 </div>
               );
             })}

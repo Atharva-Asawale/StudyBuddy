@@ -73,11 +73,11 @@ export default function LearningDebt() {
             border: '2px solid var(--neon-red)',
             borderRadius: '4px',
             padding: '12px',
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            width: 220,
-            boxShadow: '0 0 15px rgba(255, 23, 68, 0.2)'
+            fontSize: '14px',
+            width: 280,
+            boxShadow: '0 0 20px rgba(255, 23, 68, 0.3)'
           }
         });
         nodeSet.add(weakTopic.id);
@@ -99,11 +99,11 @@ export default function LearningDebt() {
                 border: `2px solid ${isAI ? 'var(--neon-gold)' : 'var(--neon-cyan)'}`,
                 borderRadius: '4px',
                 padding: '12px',
-                fontWeight: '800',
+                fontWeight: '900',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                width: 220,
-                boxShadow: isAI ? '0 0 15px rgba(255, 171, 0, 0.2)' : '0 0 15px rgba(0, 240, 255, 0.2)'
+                fontSize: '14px',
+                width: 280,
+                boxShadow: isAI ? '0 0 20px rgba(255, 171, 0, 0.3)' : '0 0 20px rgba(0, 240, 255, 0.3)'
               }
             });
             nodeSet.add(affect.id);
@@ -141,15 +141,15 @@ export default function LearningDebt() {
 
   return (
     <DashboardLayout>
-      <div className="page-enter" style={{ height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
-        <header style={{ marginBottom: '2rem', textAlign: 'center' }}>
+      <div className="page-enter" style={{ minHeight: '1200px', display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '100%', padding: 0 }}>
+        <header style={{ marginBottom: '0.5rem', textAlign: 'center' }}>
           <h1 style={{ fontSize: '2.4rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>LEARNING DEBT MAP</h1>
-          <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-red)', fontSize: '11px', letterSpacing: '0.2em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-red)', fontSize: '14px', letterSpacing: '0.2em', fontWeight: 'bold' }}>
             TOPIC DEPENDENCY REPORT
           </div>
         </header>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
           <button
             onClick={handleRegenerate}
             disabled={regenerating}
@@ -161,10 +161,10 @@ export default function LearningDebt() {
           </button>
         </div>
 
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: selectedNodeData ? '1fr 360px' : '1fr', gap: '1.5rem', minHeight: 0 }}>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: selectedNodeData ? '1fr 300px' : '1fr', gap: '1rem', minHeight: 0 }}>
           
           {/* Graph Area */}
-          <div className="glass-panel" style={{ overflow: 'hidden', position: 'relative', padding: 0 }}>
+          <div className="glass-panel" style={{ flex: 1, minHeight: '1000px', overflow: 'hidden', position: 'relative', padding: 0, background: '#02020a', border: '2px solid rgba(255,255,255,0.1)' }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}

@@ -27,26 +27,14 @@ export default function DashboardLayout({ children, noSidebar = false }) {
         flex: 1,
         overflowY: 'auto',
         overflowX: 'hidden',
-        padding: noSidebar ? '4rem 10%' : '3rem 4rem',
+        padding: noSidebar ? '1rem 2%' : '0.5rem 2rem',
         width: '100%',
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
         zIndex: 1,
-        /* Custom scrollbar styling for the main content area */
         scrollbarWidth: 'thin',
         scrollbarColor: 'var(--neon-cyan) transparent'
       }}>
-        {/* Subtle top scanline glow for headers */}
-        <div style={{
-          position: 'sticky',
-          top: -100,
-          left: 0,
-          right: 0,
-          height: '100px',
-          background: 'linear-gradient(to bottom, rgba(0, 240, 255, 0.05), transparent)',
-          pointerEvents: 'none',
-          zIndex: 10
-        }}></div>
 
         {children}
 

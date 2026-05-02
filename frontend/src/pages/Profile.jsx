@@ -100,7 +100,7 @@ export default function Profile() {
     <DashboardLayout>
       <div className="page-enter" style={{ maxWidth: '900px', margin: '0 auto' }}>
         {/* Page Title */}
-        <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
+        <header style={{ marginBottom: '1rem', textAlign: 'center' }}>
           <h1 style={{ fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>USER PROFILE</h1>
           <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--neon-cyan)', fontSize: '12px', letterSpacing: '0.2em' }}>
             USER SETTINGS // PREFERENCES

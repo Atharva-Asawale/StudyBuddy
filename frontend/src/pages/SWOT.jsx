@@ -72,7 +72,7 @@ export default function SWOT() {
   return (
     <DashboardLayout>
       <div className="page-enter">
-        <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
+        <header style={{ marginBottom: '1rem', textAlign: 'center' }}>
           <h1 style={{ fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>STRENGTHS & WEAKNESSES</h1>
           <div style={{ color: 'var(--neon-cyan)', fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', fontSize: '11px' }}>
             SWOT ANALYSIS

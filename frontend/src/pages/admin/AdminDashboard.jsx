@@ -60,7 +60,7 @@ const StatCard = ({ title, value, icon: Icon, color, decimals = 0 }) => (
       opacity: 0.15
     }} />
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem' }}>{title}</span>
+      <span style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '1rem', fontWeight: 'bold' }}>{title}</span>
       <div style={{ color: color, background: `${color}15`, padding: '8px', borderRadius: '10px' }}>
         <Icon size={20} />
       </div>
@@ -80,9 +80,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!cachedAdminStats) {
-      fetchData();
-    }
+    fetchData();
   }, []);
 
   const fetchData = async () => {
@@ -94,7 +92,13 @@ export default function AdminDashboard() {
       ]);
       setStats(statsRes.data);
       cacheAdminStats(statsRes.data);
-      setRecentStudents(studentsRes.data.slice(0, 5));
+      
+      const sortedStudents = [...studentsRes.data].sort((a, b) => {
+        const dateA = a.createdAt === 'Recent' ? new Date() : new Date(a.createdAt);
+        const dateB = b.createdAt === 'Recent' ? new Date() : new Date(b.createdAt);
+        return dateB - dateA;
+      });
+      setRecentStudents(sortedStudents.slice(0, 5));
       setError(null);
     } catch (err) {
       if (!cachedAdminStats) setError('Failed to load dashboard statistics');
@@ -130,10 +134,10 @@ export default function AdminDashboard() {
     : 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div style={{ textAlign: 'center' }}>
         <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600' }}>Platform Overview</h2>
-        <p style={{ color: 'rgba(255, 255, 255, 0.4)', margin: '4px 0 0', fontSize: '0.9rem' }}>Real-time statistics across all branches</p>
+        <p style={{ color: 'rgba(255, 255, 255, 0.6)', margin: '4px 0 0', fontSize: '1rem', fontWeight: 'bold' }}>Real-time statistics across all branches</p>
       </div>
 
       {/* TOP STATS */}

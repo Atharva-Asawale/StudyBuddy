@@ -215,7 +215,7 @@ export default function LoginModal({ closeModal }) {
                 </div>
                 {globalError && <p style={{ color: 'var(--neon-red)', fontSize: '10px', marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>{globalError}</p>}
                 {successMsg && <p style={{ color: 'var(--neon-green)', fontSize: '10px', marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>{successMsg}</p>}
-                <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem', borderColor: 'var(--neon-gold)', color: 'var(--neon-gold)' }}>{loading ? <MiniLoader /> : 'SEND OTP'}</button>
+                <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? 'VALIDATING...' : 'SEND OTP'}</button>
                 <p style={{ textAlign: 'center', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setMode('signin')}>BACK TO LOGIN</p>
               </form>
             )}
@@ -230,7 +230,7 @@ export default function LoginModal({ closeModal }) {
                   ))}
                 </div>
                 {globalError && <p style={{ color: 'var(--neon-red)', fontSize: '10px', marginBottom: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>{globalError}</p>}
-                <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? <MiniLoader /> : 'VERIFY'}</button>
+                <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? 'VALIDATING...' : 'VERIFY'}</button>
                 <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
                   <span style={{ cursor: resendTimer === 0 ? 'pointer' : 'default', color: resendTimer === 0 ? 'var(--neon-gold)' : 'var(--text-muted)' }} onClick={resendTimer === 0 ? handleForgotStep1 : undefined}>RESEND OTP</span> {resendTimer > 0 && `(${resendTimer}S)`}
                 </p>
@@ -257,7 +257,7 @@ export default function LoginModal({ closeModal }) {
                 </div>
                 {globalError && <p style={{ color: 'var(--neon-red)', fontSize: '10px', marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>{globalError}</p>}
                 {successMsg && <p style={{ color: 'var(--neon-green)', fontSize: '10px', marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>{successMsg}</p>}
-                <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>{loading ? <MiniLoader /> : 'UPDATE PASSWORD'}</button>
+                <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>{loading ? 'VALIDATING...' : 'UPDATE PASSWORD'}</button>
               </form>
             )}
           </div>
@@ -313,7 +313,7 @@ export default function LoginModal({ closeModal }) {
                 </div>
               )}
 
-              <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem', borderColor: `var(--neon-${mode === 'signup' ? 'pink' : 'cyan'})`, color: `var(--neon-${mode === 'signup' ? 'pink' : 'cyan'})` }}>{loading ? <MiniLoader /> : (mode === 'signin' ? 'SIGN IN' : 'SIGN UP')}</button>
+              <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginBottom: '1.5rem' }}>{loading ? 'VALIDATING...' : (mode === 'signin' ? 'SIGN IN' : 'SIGN UP')}</button>
             </form>
 
             <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>

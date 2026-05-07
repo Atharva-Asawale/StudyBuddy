@@ -195,7 +195,10 @@ public class SWOTService {
 
         if (aiResponse != null) {
             try {
-                String jsonText = aiResponse.replaceAll("```json", "").replaceAll("```", "").trim();
+                String jsonText = aiResponse.trim();
+                if (jsonText.contains("{")) {
+                    jsonText = jsonText.substring(jsonText.indexOf("{"), jsonText.lastIndexOf("}") + 1);
+                }
                 
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode root = mapper.readTree(jsonText);
@@ -208,6 +211,7 @@ public class SWOTService {
                 detailedAnalysis = root.path("detailedAnalysis").asText("Analysis unavailable.");
             } catch (Exception e) {
                 overallAdvice = aiResponse;
+                System.err.println("Failed to parse SWOT AI response: " + e.getMessage());
             }
         }
 

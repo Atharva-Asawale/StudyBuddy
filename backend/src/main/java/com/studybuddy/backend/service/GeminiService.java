@@ -25,12 +25,12 @@ public class GeminiService {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    // Try multiple models in order
+    // Try multiple models in order (Updated for 2026 stable releases)
     private final String[] MODELS = {
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-flash",
-        "gemini-3.1-flash-lite-preview",
-        "gemini-3-flash-preview",
+            "gemini-3.1-flash-lite",
+            "gemini-3-flash",
+            "gemini-3.1-pro",
+            "gemini-3-pro"
     };
 
     public List<QuizQuestionDTO> generateQuiz(String topicName, String subjectName, int easy, int medium, int hard) {
@@ -95,9 +95,9 @@ public class GeminiService {
     }
 
     public String generateSwotSummary(List<String> strengths,
-                                      List<String> weaknesses,
-                                      List<String> opportunities,
-                                      List<String> threats) {
+            List<String> weaknesses,
+            List<String> opportunities,
+            List<String> threats) {
         String prompt = """
                 Write a short, encouraging SWOT summary for a student.
                 Keep it under 90 words and mention only the provided points.
@@ -149,12 +149,16 @@ public class GeminiService {
                         .body(String.class);
 
                 JsonNode root = mapper.readTree(response);
-                return root.path("candidates").get(0)
-                        .path("content")
-                        .path("parts").get(0)
-                        .path("text")
-                        .asText();
-            } catch (Exception ignored) {
+                JsonNode candidates = root.path("candidates");
+                if (candidates.isArray() && candidates.size() > 0) {
+                    JsonNode parts = candidates.get(0).path("content").path("parts");
+                    if (parts.isArray() && parts.size() > 0) {
+                        return parts.get(0).path("text").asText();
+                    }
+                }
+                System.err.println("Empty or blocked response from model: " + model);
+            } catch (Exception e) {
+                System.err.println("Model " + model + " error: " + e.getMessage());
             }
         }
 
@@ -187,10 +191,14 @@ public class GeminiService {
             }
 
             SwotAnalysisDTO analysis = mapper.readValue(text, SwotAnalysisDTO.class);
-            if (analysis.getStrengths() == null) analysis.setStrengths(new ArrayList<>());
-            if (analysis.getWeaknesses() == null) analysis.setWeaknesses(new ArrayList<>());
-            if (analysis.getOpportunities() == null) analysis.setOpportunities(new ArrayList<>());
-            if (analysis.getThreats() == null) analysis.setThreats(new ArrayList<>());
+            if (analysis.getStrengths() == null)
+                analysis.setStrengths(new ArrayList<>());
+            if (analysis.getWeaknesses() == null)
+                analysis.setWeaknesses(new ArrayList<>());
+            if (analysis.getOpportunities() == null)
+                analysis.setOpportunities(new ArrayList<>());
+            if (analysis.getThreats() == null)
+                analysis.setThreats(new ArrayList<>());
             return analysis;
         } catch (Exception exception) {
             return null;
@@ -200,7 +208,7 @@ public class GeminiService {
     private String buildPrompt(String topicName, String subjectName, int easy, int medium, int hard) {
         return """
                 Generate a multiple choice quiz about "%s" from the subject "%s".
-                
+
                 Rules:
                 - EXACTLY %d easy questions
                 - EXACTLY %d medium questions
@@ -211,7 +219,7 @@ public class GeminiService {
                 - Questions should be academic level for engineering students
                 - Include a short, clear explanation for why the answer is correct.
                 - Return ONLY valid JSON, no markdown, no extra text
-                
+
                 Format:
                 [
                   {
@@ -278,16 +286,16 @@ public class GeminiService {
     private List<QuizQuestionDTO> getFallbackQuestions(String topicName) {
         List<QuizQuestionDTO> fallback = new ArrayList<>();
         String[][] qa = {
-            {"What is the primary purpose of " + topicName + "?",
-             "Data storage", "Problem solving", "Code optimization", "Network communication", "1"},
-            {"Which of the following best describes " + topicName + "?",
-             "A hardware component", "A software concept", "A network protocol", "A database type", "1"},
-            {"" + topicName + " is most commonly used in which field?",
-             "Computer Science", "Biology", "Chemistry", "Physics", "0"},
-            {"What is a key advantage of " + topicName + "?",
-             "Simplicity", "Efficiency", "Cost reduction", "Speed", "1"},
-            {"Which concept is closely related to " + topicName + "?",
-             "Algorithms", "Hardware design", "Network topology", "Database schema", "0"},
+                { "What is the primary purpose of " + topicName + "?",
+                        "Data storage", "Problem solving", "Code optimization", "Network communication", "1" },
+                { "Which of the following best describes " + topicName + "?",
+                        "A hardware component", "A software concept", "A network protocol", "A database type", "1" },
+                { "" + topicName + " is most commonly used in which field?",
+                        "Computer Science", "Biology", "Chemistry", "Physics", "0" },
+                { "What is a key advantage of " + topicName + "?",
+                        "Simplicity", "Efficiency", "Cost reduction", "Speed", "1" },
+                { "Which concept is closely related to " + topicName + "?",
+                        "Algorithms", "Hardware design", "Network topology", "Database schema", "0" },
         };
         for (String[] q : qa) {
             QuizQuestionDTO dto = new QuizQuestionDTO();
@@ -300,12 +308,13 @@ public class GeminiService {
     }
 
     private String buildFallbackSwotSummary(List<String> strengths,
-                                            List<String> weaknesses,
-                                            List<String> opportunities,
-                                            List<String> threats) {
+            List<String> weaknesses,
+            List<String> opportunities,
+            List<String> threats) {
         String strength = strengths.isEmpty() ? "your progress is still being established" : strengths.get(0);
         String weakness = weaknesses.isEmpty() ? "no major weak areas are visible yet" : weaknesses.get(0);
-        String opportunity = opportunities.isEmpty() ? "keep attempting more topics to reveal new opportunities" : opportunities.get(0);
+        String opportunity = opportunities.isEmpty() ? "keep attempting more topics to reveal new opportunities"
+                : opportunities.get(0);
         String threat = threats.isEmpty() ? "there are no immediate threat signals right now" : threats.get(0);
 
         return "You are doing best where " + strength + " while " + weakness
@@ -313,34 +322,35 @@ public class GeminiService {
                 + ". Also watch out for " + threat + ".";
     }
 
-    public List<LearningDebtGraphDTO.AffectedTopicDTO> analyzeLearningDebt(String topicName, String topicId, String studentBranch, int studentSemester, String futureTopicsJSON, double score) {
+    public List<LearningDebtGraphDTO.AffectedTopicDTO> analyzeLearningDebt(String topicName, String topicId,
+            String studentBranch, int studentSemester, String futureTopicsJSON, double score) {
         if (apiKey == null || apiKey.isBlank()) {
             return new ArrayList<>();
         }
 
         String prompt = """
                 You are the StudyBuddy AI Mentor, an expert in academic dependency mapping.
-                
+
                 Context:
                 - Student Branch: %s
                 - Current Semester: %d
                 - Assessment Result: The student scored %.0f%% in "%s" (ID: %s).
                 - Assessment Meaning: A score below 60%% indicates a fundamental weakness that will cause 'Learning Debt' in future complex topics.
-                
+
                 Input Data (Future Topics):
                 %s
-                
+
                 Your Task:
                 Identify exactly 2 or 3 topics from the "Future Topics" list above that have a DIRECT dependency on the concepts in "%s".
                 For example, if the weakness is in "Differentiation", an affected topic might be "Integration".
-                
+
                 Strict Rules:
                 1. SELECT topics ONLY from the provided Future Topics list.
                 2. USE the exact "id" provided in the list for each selected topic.
                 3. DO NOT invent new topics. If no strong dependencies exist, return an empty array.
                 4. PROVIDE a concise, one-sentence academic reason for the dependency.
                 5. RETURN ONLY a raw JSON array. NO markdown blocks (```json), NO preamble, NO extra text.
-                
+
                 Required JSON Format:
                 [
                   {
@@ -349,7 +359,9 @@ public class GeminiService {
                     "reason": "Clear explanation of how knowledge of %s is required here."
                   }
                 ]
-                """.formatted(studentBranch, studentSemester, score, topicName, topicId, futureTopicsJSON, topicName, topicName);
+                """
+                .formatted(studentBranch, studentSemester, score, topicName, topicId, futureTopicsJSON, topicName,
+                        topicName);
 
         String response = generatePlainText(prompt);
         return parseLearningDebt(response);

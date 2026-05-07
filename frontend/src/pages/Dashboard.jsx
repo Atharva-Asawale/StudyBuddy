@@ -211,13 +211,13 @@ export default function Dashboard() {
               PERFORMANCE TREND
             </h3>
             {processedTrend.length > 0 ? (
-              <div style={{ height: '300px', width: '100%', minWidth: '300px', minHeight: '300px' }}>
+              <div style={{ height: '300px', width: '100%', minWidth: 0, minHeight: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={processedTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
                     <YAxis stroke="var(--text-muted)" fontSize={10} domain={[0, 100]} tickLine={false} axisLine={false} />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--neon-green)', borderRadius: '8px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}
                       itemStyle={{ color: 'var(--neon-green)' }}
                       labelStyle={{ color: 'var(--text-muted)', marginBottom: '4px' }}
@@ -246,13 +246,13 @@ export default function Dashboard() {
               TOP TOPIC SCORES
             </h3>
             {dashboardData.topicPerformance?.length > 0 ? (
-              <div style={{ height: `${Math.max(200, (dashboardData.topicPerformance?.length || 0) * 40)}px`, width: '100%', minWidth: '300px' }}>
+              <div style={{ height: `${Math.max(200, (dashboardData.topicPerformance?.length || 0) * 40)}px`, width: '100%', minWidth: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dashboardData.topicPerformance} layout="vertical" margin={{ left: 100, right: 30 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                     <XAxis type="number" domain={[0, 100]} hide />
                     <YAxis type="category" dataKey="topic" stroke="var(--text-primary)" fontSize={10} width={120} tickLine={false} axisLine={false} />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--neon-cyan)', borderRadius: '8px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}
                       itemStyle={{ color: 'var(--neon-cyan)' }}
                     />

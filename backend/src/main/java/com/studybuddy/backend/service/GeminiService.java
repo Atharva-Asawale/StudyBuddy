@@ -28,9 +28,9 @@ public class GeminiService {
     // Try multiple models in order (Updated for 2026 stable releases)
     private final String[] MODELS = {
             "gemini-3.1-flash-lite",
-            "gemini-3-flash",
-            "gemini-3.1-pro",
-            "gemini-3-pro"
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+            "gemini-2.5-pro"
     };
 
     public List<QuizQuestionDTO> generateQuiz(String topicName, String subjectName, int easy, int medium, int hard) {
@@ -116,19 +116,20 @@ public class GeminiService {
     }
 
     private String buildRequestBody(String prompt) {
-        return """
-                {
-                  "contents": [{
-                    "parts": [{
-                      "text": "%s"
-                    }]
-                  }],
-                  "generationConfig": {
-                    "temperature": 0.7,
-                    "maxOutputTokens": 2048
-                  }
-                }
-                """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n"));
+        try {
+            com.fasterxml.jackson.databind.node.ObjectNode requestBody = mapper.createObjectNode();
+            com.fasterxml.jackson.databind.node.ArrayNode contents = requestBody.putArray("contents");
+            com.fasterxml.jackson.databind.node.ObjectNode part = contents.addObject().putArray("parts").addObject();
+            part.put("text", prompt);
+
+            com.fasterxml.jackson.databind.node.ObjectNode config = requestBody.putObject("generationConfig");
+            config.put("temperature", 0.7);
+            config.put("maxOutputTokens", 2048);
+
+            return mapper.writeValueAsString(requestBody);
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 
     public String generatePlainText(String prompt) {

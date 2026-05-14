@@ -26,9 +26,9 @@ public class GeminiService {
     private final ObjectMapper mapper = new ObjectMapper();
 
     private final String[] MODELS = {
-            "gemini-2.5-flash", // Primary: stable, globally supported
+            "gemini-3.1-flash-lite",
             "gemini-2.5-flash-lite",
-            "gemini-3.1-flash-lite"
+            "gemini-2.5-flash"
     };
 
     public List<QuizQuestionDTO> generateQuiz(String topicName, String subjectName, int easy, int medium, int hard) {

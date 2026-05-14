@@ -57,6 +57,7 @@ export default function Dashboard() {
   }, [cachedDashboardData, cachedDebtData]);
 
   const handleRefresh = async () => {
+    if (refreshing || loading) return;
     setRefreshing(true);
     try {
       const [dashboardRes, debtRes] = await Promise.all([

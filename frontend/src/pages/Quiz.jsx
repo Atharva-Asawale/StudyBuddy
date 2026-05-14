@@ -170,11 +170,11 @@ export default function Quiz() {
 
             <button 
               onClick={fetchQuiz} 
-              disabled={totalQuestions < 3 || totalQuestions > 20}
+              disabled={loading || totalQuestions < 3 || totalQuestions > 20}
               className="btn-primary"
               style={{ width: '100%', padding: '1.2rem' }}
             >
-              START QUIZ →
+              {loading ? 'GENERATING...' : 'START QUIZ →'}
             </button>
             
             <button onClick={() => navigate('/syllabus')} className="btn-ghost" style={{ marginTop: '1.5rem', width: '100%' }}>

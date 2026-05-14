@@ -48,7 +48,11 @@ export default function SWOT() {
     fetchSwot();
   }, []);
 
-  const handleRegenerate = () => fetchSwot(true);
+  const handleRegenerate = () => {
+    if (regenerating || loading) return;
+    setRegenerating(true);
+    fetchSwot(true);
+  };
 
   if (loading) return <GameLoader message="GENERATING ANALYSIS..." subMessage="ANALYZING PERFORMANCE DATA" />;
 

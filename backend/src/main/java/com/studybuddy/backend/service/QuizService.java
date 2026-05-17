@@ -69,7 +69,7 @@ public class QuizService {
 
             String prompt = String.format("""
                 [SYSTEM: PRECISION EXAM GENERATOR]
-                You are a subject matter expert. Generate a multiple choice quiz for topic "%s" in subject "%s".
+                You are a subject matter expert generating a technical academic exam for topic "%s" in subject "%s".
                 
                 [CORE KNOWLEDGE MAP (JSON)]:
                 %s
@@ -77,11 +77,27 @@ public class QuizService {
                 [SOURCE MATERIAL (TEXT)]:
                 %s
                 
-                RULES:
-                1. Generate EXACTLY %d easy questions, %d medium questions, and %d hard questions.
-                2. Total questions: %d.
-                3. Each question must have 4 options and one correctIndex (0-3).
-                4. Include a short, clear explanation for each answer.
+                [REQUIRED QUESTION DISTRIBUTION]:
+                - Easy Questions: %d
+                - Medium Questions: %d
+                - Hard Questions: %d
+                - TOTAL: %d
+                
+                [DIFFICULTY CRITERIA]:
+                - easy: Direct recall of facts or definitions from the Knowledge Map.
+                - medium: Requires understanding of how concepts relate or simple application.
+                - hard: Requires deep inference, complex problem solving, or synthesis of multiple parts of the Source Material.
+                
+                [STRICT GUIDELINES]:
+                1. MANDATORY: You MUST generate EXACTLY the numbers specified in the Distribution above.
+                2. QUESTION VARIETY: Do NOT just ask simple recall questions. 
+                   - Include CASE STUDY based questions (describe a scenario and ask for the best approach/solution).
+                   - Include ANALYSIS based questions (comparing concepts, predicting outputs, or identifying logical errors).
+                   - Some questions should be lengthy and descriptive to test depth of understanding.
+                3. ACCURACY: Every option must be plausible but only one is correct based on the text.
+                4. NO HALLUCINATION: Only use information provided in the JSON or Text.
+                5. Each question must include a "difficulty" field that matches the criteria.
+                6. RETURN ONLY A RAW JSON ARRAY.
                 
                 FORMAT:
                 [
@@ -89,7 +105,7 @@ public class QuizService {
                     "question": "...",
                     "options": ["A", "B", "C", "D"],
                     "correctIndex": 0,
-                    "difficulty": "easy",
+                    "difficulty": "...",
                     "explanation": "..."
                   }
                 ]

@@ -272,33 +272,77 @@ export default function CustomTest() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)' }}>{topicName.toUpperCase()}</h2>
-                <div style={{ fontSize: '10px', color: 'var(--neon-cyan)', fontFamily: 'var(--font-mono)', letterSpacing: '0.2em' }}>QUESTION {String(currentIdx + 1).padStart(2, '0')} // QUIZ</div>
+                <div style={{ fontSize: '10px', color: 'var(--neon-cyan)', fontFamily: 'var(--font-mono)', letterSpacing: '0.2em' }}>QUIZ IN PROGRESS // {selectedAnswers.filter(a => a !== null).length} OF {questions.length} COMPLETED</div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--neon-pink)', fontFamily: 'var(--font-mono)' }}>{currentIdx + 1}</span>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}> / {questions.length}</span>
-              </div>
+              <button onClick={() => setState('setup')} className="btn-ghost" style={{ fontSize: '10px' }}>EXIT QUIZ</button>
             </div>
 
             <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', marginBottom: '3rem', overflow: 'hidden' }}>
-              <div style={{ width: `${((currentIdx + 1) / questions.length) * 100}%`, height: '100%', background: 'var(--neon-pink)', boxShadow: 'var(--glow-pink)', transition: 'all 0.4s' }}></div>
+              <div style={{ width: `${(selectedAnswers.filter(a => a !== null).length / questions.length) * 100}%`, height: '100%', background: 'var(--neon-pink)', boxShadow: 'var(--glow-pink)', transition: 'all 0.4s' }}></div>
             </div>
 
-            <div className="glass-panel" style={{ padding: '3rem', marginBottom: '2rem' }}>
+            {/* Question Navigator */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {questions.map((_, i) => {
+                const isCurrent = currentIdx === i;
+                const isAnswered = selectedAnswers[i] !== null;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentIdx(i)}
+                    style={{
+                      width: '40px', height: '40px', borderRadius: '4px', cursor: 'pointer',
+                      fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '14px', transition: 'all 0.2s',
+                      background: isCurrent ? 'var(--neon-pink)' : isAnswered ? 'rgba(255, 45, 120, 0.15)' : 'rgba(255,255,255,0.03)',
+                      color: isCurrent ? 'white' : isAnswered ? 'var(--neon-pink)' : 'var(--text-muted)',
+                      border: isCurrent ? 'none' : isAnswered ? '1px solid var(--neon-pink)' : '1px solid rgba(255,255,255,0.1)',
+                      boxShadow: isCurrent ? 'var(--glow-pink)' : 'none'
+                    }}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="glass-panel" style={{ padding: '3rem', marginBottom: '2rem', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: -12, left: 30, background: 'var(--bg-base)', padding: '0 10px', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>QUESTION {String(currentIdx + 1).padStart(2, '0')}</div>
+              
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
                 <span className="badge" style={{
                   color: questions[currentIdx].difficulty === 'easy' ? 'var(--neon-green)' : questions[currentIdx].difficulty === 'medium' ? 'var(--neon-gold)' : 'var(--neon-red)',
                   borderColor: questions[currentIdx].difficulty === 'easy' ? 'var(--neon-green)' : questions[currentIdx].difficulty === 'medium' ? 'var(--neon-gold)' : 'var(--neon-red)'
                 }}>{questions[currentIdx].difficulty.toUpperCase()}</span>
               </div>
-              <h4 style={{ fontSize: '1.6rem', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '3rem', lineHeight: 1.5 }}>{questions[currentIdx].question}</h4>
+              
+              <p style={{ fontSize: '1.6rem', fontWeight: 600, color: '#ffffff', textAlign: 'center', marginBottom: '3rem', lineHeight: 1.5 }}>
+                {questions[currentIdx].question}
+              </p>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {questions[currentIdx].options.map((opt, i) => {
                   const isSelected = selectedAnswers[currentIdx] === opt;
                   return (
-                    <button key={i} onClick={() => handleAnswerSelect(opt)} className={isSelected ? "btn-primary" : "btn-secondary"} style={{ padding: '1.5rem', textAlign: 'left', background: isSelected ? 'var(--neon-pink)' : 'rgba(255,255,255,0.02)' }}>
-                      {opt}
-                    </button>
+                    <div
+                      key={i}
+                      onClick={() => handleAnswerSelect(opt)}
+                      className={isSelected ? "btn-primary" : "btn-secondary"}
+                      style={{ 
+                        padding: '1.5rem', textAlign: 'left', display: 'flex', gap: '1rem', alignItems: 'center',
+                        border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                        background: isSelected ? 'var(--neon-pink)' : 'rgba(255,255,255,0.03)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ 
+                        width: '32px', height: '32px', borderRadius: '4px', background: 'rgba(0,0,0,0.2)', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px', flexShrink: 0,
+                        color: isSelected ? 'white' : 'var(--neon-cyan)'
+                      }}>
+                        {['A', 'B', 'C', 'D'][i]}
+                      </div>
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff', fontFamily: 'var(--font-body)' }}>{opt}</span>
+                    </div>
                   );
                 })}
               </div>
@@ -338,14 +382,24 @@ export default function CustomTest() {
                       </div>
                       <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>{q.question}</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                        <div style={{ padding: '1rem', background: isCorrect ? 'rgba(0,255,100,0.05)' : 'rgba(255,23,68,0.05)', border: `1px solid ${isCorrect ? 'var(--neon-green)' : 'var(--neon-red)'}`, borderRadius: '4px', color: isCorrect ? 'var(--neon-green)' : 'var(--neon-red)', fontSize: '13px' }}>
-                          <div style={{ fontSize: '8px', fontWeight: 800, marginBottom: '4px' }}>SELECTED:</div>
-                          {selectedAnswers[i] || 'NULL'}
+                        <div style={{ padding: '1rem', background: isCorrect ? 'rgba(0,255,100,0.05)' : 'rgba(255,23,68,0.05)', border: `1px solid ${isCorrect ? 'var(--neon-green)' : 'var(--neon-red)'}`, borderRadius: '8px', color: isCorrect ? 'var(--neon-green)' : 'var(--neon-red)', fontSize: '13px', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${isCorrect ? 'var(--neon-green)' : 'var(--neon-red)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 800, flexShrink: 0 }}>
+                            {isCorrect ? '✓' : '✗'}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '8px', fontWeight: 800, marginBottom: '2px', opacity: 0.6 }}>YOUR ANSWER:</div>
+                            {selectedAnswers[i] || 'NOT ANSWERED'}
+                          </div>
                         </div>
                         {!isCorrect && (
-                          <div style={{ padding: '1rem', background: 'rgba(0,255,100,0.05)', border: '1px solid var(--neon-green)', borderRadius: '4px', color: 'var(--neon-green)', fontSize: '13px' }}>
-                            <div style={{ fontSize: '8px', fontWeight: 800, marginBottom: '4px' }}>EXPECTED:</div>
-                            {q.answer}
+                          <div style={{ padding: '1rem', background: 'rgba(0,255,100,0.05)', border: '1px solid var(--neon-green)', borderRadius: '8px', color: 'var(--neon-green)', fontSize: '13px', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid var(--neon-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 800, flexShrink: 0 }}>
+                              ✓
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '8px', fontWeight: 800, marginBottom: '2px', opacity: 0.6 }}>CORRECT ANSWER:</div>
+                              {q.answer}
+                            </div>
                           </div>
                         )}
                       </div>

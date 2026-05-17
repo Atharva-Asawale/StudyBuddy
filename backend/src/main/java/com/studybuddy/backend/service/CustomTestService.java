@@ -85,7 +85,10 @@ public class CustomTestService {
                 
                 [STRICT GUIDELINES]:
                 1. MANDATORY: You MUST generate EXACTLY the numbers specified in the Distribution above.
-                2. If you fail to generate the correct count for 'hard' questions, the quiz is invalid.
+                2. QUESTION VARIETY: Do NOT just ask simple recall questions. 
+                   - Include CASE STUDY based questions (describe a scenario and ask for the best approach/solution).
+                   - Include ANALYSIS based questions (comparing concepts, predicting outputs, or identifying logical errors).
+                   - Some questions should be lengthy and descriptive to test depth of understanding.
                 3. ACCURACY: Every option must be plausible but only one is correct based on the text.
                 4. NO HALLUCINATION: Only use information provided in the JSON or Text.
                 5. Each question must include a "difficulty" field that matches the criteria.
@@ -100,7 +103,7 @@ public class CustomTestService {
                     "explanation": "..."
                   }
                 ]
-                """, keywordsJson, selectedChunks, easyCount, mediumCount, hardCount, total, total);
+                """, keywordsJson, selectedChunks, easyCount, mediumCount, hardCount, total);
 
         try {
             String response = geminiService.generatePlainText(prompt);

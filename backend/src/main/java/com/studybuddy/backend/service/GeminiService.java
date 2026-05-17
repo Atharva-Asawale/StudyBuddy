@@ -213,6 +213,7 @@ public class GeminiService {
                 - EXACTLY %d medium questions
                 - EXACTLY %d hard questions
                 - Total questions: %d
+                - QUESTION VARIETY: Include CASE STUDY based questions (scenarios), ANALYSIS based questions (comparisons/predictions), and some LENGTHY descriptive questions.
                 - Each question must have exactly 4 options
                 - Only one option is correct
                 - Questions should be academic level for engineering students

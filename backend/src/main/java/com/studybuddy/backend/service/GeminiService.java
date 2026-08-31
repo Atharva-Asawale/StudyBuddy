@@ -27,9 +27,9 @@ public class GeminiService {
 
     // Gemini 3.x stable Flash models (current documented fallback order).
     private final String[] MODELS = {
-            "gemini-3.7-flash",
             "gemini-3.6-flash",
             "gemini-3.5-flash",
+            "gemini-3.7-flash",
             "gemini-3.5-flash-lite"
     };
 

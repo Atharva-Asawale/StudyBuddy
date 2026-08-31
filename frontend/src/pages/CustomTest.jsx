@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { customQuizService } from '../services/api';
 import GameLoader from '../components/GameLoader';
 import MiniLoader from '../components/MiniLoader';
+import CountUp from '../components/CountUp';
 import {
   FileText, File, X, Sparkles, Plus, Minus,
   ChevronRight, ChevronLeft, CheckCircle, AlertCircle,
-  Trash2, BarChart2, Check, ArrowRight
+  Trash2, BarChart2, Check
 } from 'lucide-react';
 import { customConfirm } from '../utils/alert';
 
@@ -124,7 +125,7 @@ export default function CustomTest() {
       setResult(res.data);
       setState('result');
       fetchHistory();
-    } catch (err) {
+    } catch {
       setResult({ ...payload, createdAt: new Date().toISOString() });
       setState('result');
     }
@@ -142,12 +143,21 @@ export default function CustomTest() {
     }
   };
 
+  // Return to the main Custom Test page from the result screen
+  const handleGoBack = () => {
+    setError(null);
+    setState('setup');
+  };
+
   const totalQuestions = counts.easy + counts.medium + counts.hard;
+
+  // Hide the app sidebar while a test is in progress / results are shown (same pattern as the Quiz module)
+  const hideSidebar = state === 'quiz' || state === 'result';
 
   if (state === 'loading') return <GameLoader message="READING FILE..." subMessage={`READING CONTENT FROM ${file?.name?.toUpperCase()}`} />;
 
   return (
-    <DashboardLayout>
+    <DashboardLayout noSidebar={hideSidebar}>
       <div className="page-enter" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
         {state === 'setup' && (
           <div>
@@ -360,58 +370,92 @@ export default function CustomTest() {
         )}
 
         {state === 'result' && result && (
-          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-            <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem', marginBottom: '2rem', borderTop: `4px solid ${result.percentage >= 70 ? 'var(--neon-green)' : result.percentage >= 40 ? 'var(--neon-gold)' : 'var(--neon-red)'}` }}>
-               <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '1rem', letterSpacing: '0.3em' }}>QUIZ COMPLETED</div>
-              <div style={{ fontSize: '6rem', fontWeight: 800, color: result.percentage >= 70 ? 'var(--neon-green)' : result.percentage >= 40 ? 'var(--neon-gold)' : 'var(--neon-red)', lineHeight: 1, marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>{result.percentage}%</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '2rem' }}>{result.score} / {result.total} QUESTIONS ANSWERED</div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto 2.5rem', lineHeight: 1.6 }}>{result.percentage >= 70 ? "EXCELLENT PERFORMANCE! YOU HAVE MASTERED THIS TOPIC." : result.percentage >= 40 ? "GOOD EFFORT. REVIEW THE WEAK TOPICS TO IMPROVE." : "ADDITIONAL STUDY RECOMMENDED FOR THIS SUBJECT."}</p>
-              <button onClick={() => { setState('setup'); setFile(null); setTopicName(''); setError(null); }} className="btn-primary" style={{ minWidth: '280px' }}>GENERATE ANOTHER <ArrowRight size={18} style={{ marginLeft: '10px' }} /></button>
-            </div>
+          <div>
+            {(() => {
+              const pct = Math.round(result.percentage);
+              const color = pct >= 70 ? 'var(--neon-green)' : pct >= 50 ? 'var(--neon-gold)' : 'var(--neon-red)';
+              const feedback = pct >= 90 ? "Excellent! You have mastered this topic."
+                : pct >= 70 ? "Good job! Topic marked as mastered."
+                : pct >= 50 ? "Fair attempt. Review weak areas and try again."
+                : "Needs improvement. Study this topic carefully and retry.";
+              return (
+                <>
+                  <div className="glass-panel" style={{ textAlign: 'center', marginBottom: '2rem', padding: '3rem', borderTop: `4px solid ${color}` }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '1rem', letterSpacing: '0.3em' }}>TEST COMPLETED</div>
+                    <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: '2rem' }}>{(result.topicName || topicName || 'CUSTOM TEST').toUpperCase()}</h2>
 
-            <div className="glass-panel" style={{ padding: '2rem' }}>
-              <h3 style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '2rem', textAlign: 'center' }}>ANSWERS REVIEW</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {questions.map((q, i) => {
-                  const isCorrect = selectedAnswers[i] === q.answer;
-                  return (
-                    <div key={i} style={{ paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                        <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>QUESTION {String(i + 1).padStart(2, '0')}</span>
-                        <span className="badge" style={{ fontSize: '8px', color: q.difficulty === 'easy' ? 'var(--neon-green)' : q.difficulty === 'medium' ? 'var(--neon-gold)' : 'var(--neon-red)', borderColor: q.difficulty === 'easy' ? 'var(--neon-green)' : q.difficulty === 'medium' ? 'var(--neon-gold)' : 'var(--neon-red)' }}>{q.difficulty.toUpperCase()}</span>
-                      </div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>{q.question}</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                        <div style={{ padding: '1rem', background: isCorrect ? 'rgba(0,255,100,0.05)' : 'rgba(255,23,68,0.05)', border: `1px solid ${isCorrect ? 'var(--neon-green)' : 'var(--neon-red)'}`, borderRadius: '8px', color: isCorrect ? 'var(--neon-green)' : 'var(--neon-red)', fontSize: '13px', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${isCorrect ? 'var(--neon-green)' : 'var(--neon-red)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 800, flexShrink: 0 }}>
-                            {isCorrect ? '✓' : '✗'}
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '8px', fontWeight: 800, marginBottom: '2px', opacity: 0.6 }}>YOUR ANSWER:</div>
-                            {selectedAnswers[i] || 'NOT ANSWERED'}
-                          </div>
-                        </div>
-                        {!isCorrect && (
-                          <div style={{ padding: '1rem', background: 'rgba(0,255,100,0.05)', border: '1px solid var(--neon-green)', borderRadius: '8px', color: 'var(--neon-green)', fontSize: '13px', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                            <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid var(--neon-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 800, flexShrink: 0 }}>
-                              ✓
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '8px', fontWeight: 800, marginBottom: '2px', opacity: 0.6 }}>CORRECT ANSWER:</div>
-                              {q.answer}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ padding: '1rem', background: 'rgba(0,240,255,0.02)', borderLeft: '3px solid var(--neon-cyan)', color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5 }}>
-                        <div style={{ color: 'var(--neon-cyan)', fontSize: '9px', fontWeight: 800, marginBottom: '4px' }}>EXPLANATION:</div>
-                        {q.explanation}
-                      </div>
+                    <div style={{ fontSize: '6rem', fontWeight: 800, color, lineHeight: 1, marginBottom: '0.5rem', textShadow: `0 0 30px ${color}44` }}>
+                      <CountUp end={pct} suffix="%" />
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+
+                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', marginBottom: '2rem' }}>
+                      PERFORMANCE: {result.score} / {result.total} QUESTIONS CORRECT
+                    </div>
+
+                    <p style={{ color: 'var(--text-primary)', fontSize: '1.1rem', maxWidth: '700px', margin: '0 auto', lineHeight: 1.6 }}>
+                      {feedback.toUpperCase()}
+                    </p>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
+                    <h3 style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '2rem', textAlign: 'center' }}>ANSWERS REVIEW</h3>
+                    {questions.map((q, qi) => {
+                      const userAnswer = selectedAnswers[qi];
+                      return (
+                        <div key={qi} style={{ marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, flex: 1 }}>
+                              <span style={{ color: 'var(--text-muted)', marginRight: '1rem', fontFamily: 'var(--font-mono)' }}>{String(qi + 1).padStart(2, '0')}</span>
+                              {q.question}
+                            </p>
+                            <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                              {userAnswer == null && (
+                                <span className="badge" style={{ fontSize: '8px', color: 'var(--neon-red)', borderColor: 'var(--neon-red)' }}>NOT ANSWERED</span>
+                              )}
+                              <span className="badge" style={{ fontSize: '8px', color: q.difficulty === 'easy' ? 'var(--neon-green)' : q.difficulty === 'medium' ? 'var(--neon-gold)' : 'var(--neon-red)', borderColor: q.difficulty === 'easy' ? 'var(--neon-green)' : q.difficulty === 'medium' ? 'var(--neon-gold)' : 'var(--neon-red)' }}>{q.difficulty.toUpperCase()}</span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                            {q.options.map((opt, oi) => {
+                              const isCorrectOpt = opt === q.answer;
+                              const isUserOpt = userAnswer != null && opt === userAnswer;
+                              let borderColor = 'rgba(255,255,255,0.1)';
+                              let bgColor = 'rgba(255,255,255,0.02)';
+                              let textColor = 'var(--text-secondary)';
+
+                              if (isCorrectOpt) { borderColor = 'var(--neon-green)'; bgColor = 'rgba(0,255,100,0.05)'; textColor = 'var(--neon-green)'; }
+                              else if (isUserOpt) { borderColor = 'var(--neon-red)'; bgColor = 'rgba(255,23,68,0.05)'; textColor = 'var(--neon-red)'; }
+
+                              return (
+                                <div key={oi} style={{ padding: '1rem', background: bgColor, border: `1px solid ${borderColor}`, borderRadius: '8px', color: textColor, fontSize: '13px', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 800, flexShrink: 0 }}>
+                                    {isCorrectOpt ? '✓' : isUserOpt ? '✗' : ''}
+                                  </div>
+                                  <span>{opt}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {q.explanation && (
+                            <div style={{ marginTop: '1.5rem', padding: '1.2rem', background: 'rgba(0,240,255,0.03)', borderLeft: '3px solid var(--neon-cyan)', color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5 }}>
+                              <div style={{ color: 'var(--neon-cyan)', fontSize: '10px', fontWeight: 800, marginBottom: '4px' }}>EXPLANATION</div>
+                              {q.explanation}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <button onClick={handleGenerate} className="btn-secondary" style={{ flex: 1 }}>🔄 REGENERATE QUIZ</button>
+                    <button onClick={handleGoBack} className="btn-primary" style={{ flex: 1 }}>← GO BACK</button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
       </div>

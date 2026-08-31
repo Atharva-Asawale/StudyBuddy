@@ -67,8 +67,14 @@ export const syllabusService = {
 
 export const debtService = {
   getGraph: () => API.get('/api/debt/graph'),
+  getHierarchy: () => API.get('/api/learning-debt/graph'),
   analyzeGraph: () => API.post('/api/debt/analyze'),
 };
+
+export const resourceService = {
+  getChapterResources: (chapterId) => API.get(`/api/resources/chapter/${chapterId}`),
+};
+
 
 export const quizService = {
   generate: (topicId, file, easy = 5, medium = 3, hard = 2) => {

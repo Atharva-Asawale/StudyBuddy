@@ -191,6 +191,15 @@ function TreeNode({ node, depth = 0, onRefresh }) {
               {canAddChild && (
                 <button onClick={() => { setShowAddForm(!showAddForm); setOpen(true); }} className="btn-ghost" style={{ padding: '4px 10px', fontSize: '9px' }}>+ ADD</button>
               )}
+              {node.type === 'UNIT' && (
+                <button
+                  onClick={() => navigate(`/learn/${node.id}`)}
+                  className="btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: '9px', borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)' }}
+                >
+                  📚 RESOURCES
+                </button>
+              )}
               {node.type === 'TOPIC' && (
                 <button
                   onClick={() => navigate(`/quiz/${node.id}/${encodeURIComponent(node.name)}`)}

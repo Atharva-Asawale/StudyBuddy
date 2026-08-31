@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Users, BarChart2, LogOut, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
-import Iridescence from '../components/Iridescence';
+import Aurora from '../components/Aurora';
 
 export default function AdminLayout({ children }) {
   const { currentUser, logout } = useAuth();
@@ -27,7 +27,12 @@ export default function AdminLayout({ children }) {
       
       {/* Background */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-        <Iridescence color={[0.5, 0.6, 0.9]} speed={1} amplitude={0.1} mouseReact />
+        <Aurora
+          colorStops={['#ff2d78', '#b400ff', '#00f0ff']}
+          amplitude={0.6}
+          blend={0.6}
+          speed={0.4}
+        />
       </div>
 
       {/* Sidebar */}

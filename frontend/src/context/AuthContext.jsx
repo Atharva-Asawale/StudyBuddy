@@ -4,6 +4,7 @@ const AuthContext = createContext(null);
 const DASHBOARD_CACHE_KEY = 'studybuddy_dashboard_cache';
 const SWOT_CACHE_KEY = 'studybuddy_swot_cache';
 const DEBT_CACHE_KEY = 'studybuddy_debt_cache';
+const DEBT_HIERARCHY_CACHE_KEY = 'studybuddy_debt_hierarchy_cache';
 const SYLLABUS_CACHE_KEY = 'studybuddy_syllabus_cache';
 const SEMESTERS_CACHE_KEY = 'studybuddy_semesters_cache';
 const ADMIN_STATS_CACHE_KEY = 'studybuddy_admin_stats_cache';
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }) => {
   const [cachedDashboardData, setCachedDashboardData] = useState(() => readSessionCache(DASHBOARD_CACHE_KEY));
   const [cachedSwotData, setCachedSwotData] = useState(() => readSessionCache(SWOT_CACHE_KEY));
   const [cachedDebtData, setCachedDebtData] = useState(() => readSessionCache(DEBT_CACHE_KEY));
+  const [cachedDebtHierarchy, setCachedDebtHierarchy] = useState(() => readSessionCache(DEBT_HIERARCHY_CACHE_KEY));
   const [cachedSyllabusData, setCachedSyllabusData] = useState(() => readSessionCache(SYLLABUS_CACHE_KEY));
   const [cachedSemestersData, setCachedSemestersData] = useState(() => readSessionCache(SEMESTERS_CACHE_KEY));
   const [cachedAdminStats, setCachedAdminStats] = useState(() => readSessionCache(ADMIN_STATS_CACHE_KEY));
@@ -42,6 +44,7 @@ export const AuthProvider = ({ children }) => {
     setCachedDashboardData(null);
     setCachedSwotData(null);
     setCachedDebtData(null);
+    setCachedDebtHierarchy(null);
     setCachedSyllabusData(null);
     setCachedSemestersData(null);
     setCachedAdminStats(null);
@@ -50,12 +53,24 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
     sessionStorage.removeItem(SWOT_CACHE_KEY);
     sessionStorage.removeItem(DEBT_CACHE_KEY);
+    sessionStorage.removeItem(DEBT_HIERARCHY_CACHE_KEY);
     sessionStorage.removeItem(SYLLABUS_CACHE_KEY);
     sessionStorage.removeItem(SEMESTERS_CACHE_KEY);
     sessionStorage.removeItem(ADMIN_STATS_CACHE_KEY);
     sessionStorage.removeItem(ADMIN_STUDENTS_CACHE_KEY);
     sessionStorage.removeItem(ADMIN_WEAK_TOPICS_CACHE_KEY);
     sessionStorage.removeItem('studybuddy_quiz_results');
+
+    // Clear all topic-specific learning resource caches
+    try {
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('learning_resources_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      // Ignore
+    }
   };
 
   const cacheDashboardData = (data) => {
@@ -71,6 +86,11 @@ export const AuthProvider = ({ children }) => {
   const cacheDebtData = (data) => {
     setCachedDebtData(data);
     writeSessionCache(DEBT_CACHE_KEY, data);
+  };
+
+  const cacheDebtHierarchy = (data) => {
+    setCachedDebtHierarchy(data);
+    writeSessionCache(DEBT_HIERARCHY_CACHE_KEY, data);
   };
 
   const cacheSyllabusData = (data) => {
@@ -144,11 +164,13 @@ export const AuthProvider = ({ children }) => {
       cachedDashboardData,
       cachedSwotData,
       cachedDebtData,
+      cachedDebtHierarchy,
       cachedSyllabusData,
       cachedSemestersData,
       cacheDashboardData,
       cacheSwotData,
       cacheDebtData,
+      cacheDebtHierarchy,
       cacheSyllabusData,
       cacheSemestersData,
       cachedAdminStats,

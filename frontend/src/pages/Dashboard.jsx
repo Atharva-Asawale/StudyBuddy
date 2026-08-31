@@ -207,13 +207,13 @@ export default function Dashboard() {
           display: 'flex', flexDirection: 'column',
           gap: '1.5rem', marginBottom: '1.5rem',
         }}>
-          <div className="glass-panel card-animate" style={{ padding: '1.5rem' }}>
+          <div className="glass-panel card-animate" style={{ padding: '1.5rem', width: '100%', minWidth: 0, minHeight: '350px' }}>
             <h3 style={{ fontSize: '11px', color: 'var(--neon-green)', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>
               PERFORMANCE TREND
             </h3>
             {processedTrend.length > 0 ? (
-              <div style={{ height: '300px', width: '100%', minWidth: 0, minHeight: '300px' }}>
-                <ResponsiveContainer width="100%" height="100%">
+              <div style={{ height: '300px', width: '100%', minWidth: 0 }}>
+                <ResponsiveContainer width="99%" height={300}>
                   <LineChart data={processedTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
@@ -242,14 +242,14 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="glass-panel card-animate" style={{ padding: '1.5rem' }}>
+          <div className="glass-panel card-animate" style={{ padding: '1.5rem', width: '100%', minWidth: 0, minHeight: '300px' }}>
             <h3 style={{ fontSize: '11px', color: 'var(--neon-cyan)', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>
               TOP TOPIC SCORES
             </h3>
             {dashboardData.topicPerformance?.length > 0 ? (
-              <div style={{ height: `${Math.max(200, (dashboardData.topicPerformance?.length || 0) * 40)}px`, width: '100%', minWidth: 0 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dashboardData.topicPerformance} layout="vertical" margin={{ left: 100, right: 30 }}>
+              <div style={{ height: `${Math.max(200, Math.min(10, dashboardData.topicPerformance?.length || 0) * 40)}px`, width: '100%', minWidth: 0 }}>
+                <ResponsiveContainer width="99%" height={Math.max(200, Math.min(10, dashboardData.topicPerformance?.length || 0) * 40)}>
+                  <BarChart data={[...dashboardData.topicPerformance].sort((a, b) => b.score - a.score).slice(0, 10)} layout="vertical" margin={{ left: 100, right: 30 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                     <XAxis type="number" domain={[0, 100]} hide />
                     <YAxis type="category" dataKey="topic" stroke="var(--text-primary)" fontSize={10} width={120} tickLine={false} axisLine={false} />

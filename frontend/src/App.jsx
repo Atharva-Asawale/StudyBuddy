@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Iridescence from './components/Iridescence';
-import Galaxy from './components/Galaxy';
+import Aurora from './components/Aurora';
+import Lightfall from './components/Lightfall';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LoginModal from './components/LoginModal';
@@ -11,6 +11,7 @@ import Progress from './pages/Progress';
 import Performance from './pages/Performance';
 import SWOT from './pages/SWOT';
 import LearningDebt from './pages/LearningDebt';
+import LearnPage from './pages/LearnPage';
 import Syllabus from './pages/Syllabus';
 import Profile from './pages/Profile';
 import Quiz from './pages/Quiz';
@@ -21,6 +22,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminStudents from './pages/admin/AdminStudents';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminManage from './pages/admin/AdminManage';
+
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -66,22 +68,30 @@ function AppContent() {
         }}>
         {!showLogin && (
           isLandingPage ? (
-            <Galaxy
-              mouseInteraction={false}
-              mouseRepulsion={false}
-              density={0.6}
-              glowIntensity={0.4}
-              saturation={0}
-              hueShift={140}
-              twinkleIntensity={0.2}
-              rotationSpeed={0.05}
-              repulsionStrength={0}
-              autoCenterRepulsion={0}
-              starSpeed={0.2}
-              speed={0.25}
+            <Lightfall
+              colors={['#ff2d78', '#b400ff', '#00f0ff']}
+              backgroundColor="#05050a"
+              speed={0.3}
+              streakCount={3}
+              streakWidth={0.8}
+              streakLength={1.2}
+              glow={0.8}
+              density={0.4}
+              twinkle={0.8}
+              zoom={3}
+              backgroundGlow={0.1}
+              opacity={0.9}
+              mouseInteraction={true}
+              mouseStrength={0.35}
+              mouseRadius={0.8}
             />
           ) : (
-            <Iridescence color={[0.4, 0.5, 0.8]} speed={0.6} amplitude={0.07} mouseReact />
+            <Aurora
+              colorStops={['#ff2d78', '#b400ff', '#00f0ff']}
+              amplitude={0.6}
+              blend={0.6}
+              speed={0.4}
+            />
           )
         )}
       </div>
@@ -123,7 +133,14 @@ function AppContent() {
         <Route path="/learning-debt" element={
           <ProtectedRoute><LearningDebt /></ProtectedRoute>
         } />
+        <Route path="/learn" element={
+          <ProtectedRoute><LearnPage /></ProtectedRoute>
+        } />
+        <Route path="/learn/:chapterId" element={
+          <ProtectedRoute><LearnPage /></ProtectedRoute>
+        } />
         <Route path="/syllabus" element={
+
           <ProtectedRoute><Syllabus /></ProtectedRoute>
         } />
         <Route path="/profile" element={

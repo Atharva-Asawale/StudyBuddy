@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authService, passwordResetService } from '../services/api';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import Iridescence from '../components/Iridescence';
+import Aurora from '../components/Aurora';
 import MiniLoader from '../components/MiniLoader';
 
 export default function AdminLogin() {
@@ -145,7 +145,12 @@ export default function AdminLogin() {
 
   const Background = useMemo(() => (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-      <Iridescence color={[0.0, 0.4, 0.6]} speed={0.6} amplitude={0.08} mouseReact />
+      <Aurora
+        colorStops={['#ff2d78', '#b400ff', '#00f0ff']}
+        amplitude={0.6}
+        blend={0.6}
+        speed={0.4}
+      />
     </div>
   ), []);
 

@@ -25,10 +25,12 @@ public class GeminiService {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
+    // Gemini 3.x stable Flash models (current documented fallback order).
     private final String[] MODELS = {
-            "gemini-3.1-flash-lite",
-            "gemini-2.5-flash-lite",
-            "gemini-2.5-flash"
+            "gemini-3.7-flash",
+            "gemini-3.6-flash",
+            "gemini-3.5-flash",
+            "gemini-3.5-flash-lite"
     };
 
     public List<QuizQuestionDTO> generateQuiz(String topicName, String subjectName, int easy, int medium, int hard) {
@@ -121,8 +123,12 @@ public class GeminiService {
             part.put("text", prompt);
 
             com.fasterxml.jackson.databind.node.ObjectNode config = requestBody.putObject("generationConfig");
-            config.put("temperature", 0.7);
+            // Gemini 3.x: temperature/topP/topK/candidateCount are deprecated for these models.
             config.put("maxOutputTokens", 2048);
+            // Gemini 3.x: thinkingLevel (replaces the legacy thinkingBudget) controls internal
+            // reasoning depth. Thinking tokens count toward maxOutputTokens, so LOW keeps the
+            // JSON responses complete within the existing 2048-token budget.
+            config.putObject("thinkingConfig").put("thinkingLevel", "LOW");
 
             return mapper.writeValueAsString(requestBody);
         } catch (Exception e) {
@@ -398,6 +404,130 @@ public class GeminiService {
         } catch (Exception e) {
             System.err.println("Learning Debt parse error: " + e.getMessage());
             return new ArrayList<>();
+        }
+    }
+
+    @lombok.Data
+    public static class TopicResourceAiRankingResult {
+        private String overallInsight;
+        private List<RankedItem> recommendations = new ArrayList<>();
+
+        @lombok.Data
+        public static class RankedItem {
+            private String resourceId;
+            private Integer rank;
+            private String reason;
+        }
+    }
+
+    public TopicResourceAiRankingResult personalizeAndRankTopicResources(
+            String branch,
+            int semester,
+            String topicName,
+            double score,
+            String status,
+            String candidateResourcesJson) {
+
+        TopicResourceAiRankingResult fallback = new TopicResourceAiRankingResult();
+        fallback.setOverallInsight("Here are curated study resources organized to reinforce your understanding of " + topicName + ".");
+
+        if (apiKey == null || apiKey.isBlank()) {
+            return fallback;
+        }
+
+        String prompt = """
+                You are StudyBuddy's personalized learning mentor.
+                The student needs learning resources for the provided syllabus topic.
+
+                Student context:
+                Branch: %s
+                Semester: %d
+
+                Topic:
+                Name: %s
+                Current Score: %.1f%%
+                Status: %s
+
+                Below are REAL candidate resources retrieved from trusted APIs (YouTube, TinyFish Search, TinyFish Fetch):
+                %s
+
+                Your task:
+                Evaluate and rank the resources across the three categories (videos, webResources, pdfs) based on the student's mastery level and context. Provide a concise personalized reason for why each selected resource is helpful.
+
+                Strict Rules:
+                1. ONLY select resources from the provided candidate list.
+                2. NEVER invent or fabricate a resource.
+                3. NEVER invent, hallucinate, or modify a URL.
+                4. NEVER create a new resource ID. Use the exact "id" given in the list (e.g. yt_..., tf_web_..., tf_pdf_...).
+                5. Consider the student's score and mastery status:
+                   - For WEAK / low mastery (< 60%%), prioritize clear foundational tutorials and structured step-by-step guides.
+                   - For AT_RISK (60-79%%), prioritize concept reinforcement, practice, and core textbook references.
+                   - For STRONG (>= 80%%), prioritize deep-dive reference materials and advanced problem solving.
+                6. Rank resources within each category (videos, webResources, pdfs) while preserving their type. Select up to 3 resources per category.
+                7. Return valid JSON only. NO markdown blocks (```json), NO preamble, NO extra commentary.
+
+                Required JSON structure:
+                {
+                  "overallInsight": "1-2 sentence personalized mentor summary of what to focus on",
+                  "recommendations": [
+                    {
+                      "resourceId": "exact_id_from_provided_list",
+                      "rank": 1,
+                      "reason": "Clear explanation of how this specific resource helps the student based on their mastery"
+                    }
+                  ]
+                }
+                """.formatted(
+                branch != null ? branch : "Engineering",
+                semester,
+                topicName,
+                score,
+                status,
+                candidateResourcesJson
+        );
+
+        try {
+            String response = generatePlainText(prompt);
+            if (response == null || response.isBlank()) {
+                return fallback;
+            }
+
+            String text = response.trim();
+            if (text.startsWith("```")) {
+                text = text.replaceAll("```json", "").replaceAll("```", "").trim();
+            }
+
+            int start = text.indexOf('{');
+            int end = text.lastIndexOf('}');
+            if (start >= 0 && end > start) {
+                text = text.substring(start, end + 1);
+            }
+
+            JsonNode root = mapper.readTree(text);
+            TopicResourceAiRankingResult result = new TopicResourceAiRankingResult();
+            if (root.has("overallInsight") && !root.path("overallInsight").asText().isBlank()) {
+                result.setOverallInsight(root.path("overallInsight").asText());
+            } else {
+                result.setOverallInsight(fallback.getOverallInsight());
+            }
+
+            JsonNode recsNode = root.path("recommendations");
+            if (recsNode.isArray()) {
+                for (JsonNode r : recsNode) {
+                    String rId = r.path("resourceId").asText(null);
+                    if (rId != null && !rId.isBlank()) {
+                        TopicResourceAiRankingResult.RankedItem item = new TopicResourceAiRankingResult.RankedItem();
+                        item.setResourceId(rId.trim());
+                        item.setRank(r.path("rank").asInt(1));
+                        item.setReason(r.path("reason").asText("Recommended for topic mastery."));
+                        result.getRecommendations().add(item);
+                    }
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            System.err.println("Gemini personalizeAndRankTopicResources error: " + e.getMessage());
+            return fallback;
         }
     }
 }

@@ -408,7 +408,7 @@ export default function Progress() {
                   CGPA TREND ANALYSIS
                 </h3>
                 <div style={{ height: '320px', width: '100%', minWidth: 0, minHeight: '320px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                     <LineChart data={cgpaTrendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                       <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={10} fontFamily="var(--font-mono)" tickLine={false} axisLine={false} />
@@ -436,7 +436,7 @@ export default function Progress() {
                 </h3>
                 {subjectChartData.length ? (
                   <div style={{ height: `${Math.max(300, subjectChartData.length * 50)}px`, width: '100%', minWidth: 0, minHeight: '300px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                       <BarChart data={subjectChartData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }} barSize={20}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                         <XAxis type="number" domain={[0, 100]} stroke="var(--text-muted)" fontSize={10} fontFamily="var(--font-mono)" tickLine={false} axisLine={false} />

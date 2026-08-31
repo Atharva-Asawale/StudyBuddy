@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Activity, BarChart2, AlertTriangle, Menu, ChevronLeft, FileText } from 'lucide-react';
+import { Activity, BarChart2, AlertTriangle, Menu, ChevronLeft, FileText, Compass } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
@@ -9,6 +9,7 @@ const navItems = [
   { path: '/performance', icon: 'activity', label: 'Performance' },
   { path: '/swot', icon: 'bolt', label: 'SWOT' },
   { path: '/learning-debt', icon: 'risk', label: 'Learning Debt' },
+  { path: '/learn', icon: 'resources', label: 'Resources' },
   { path: '/syllabus', icon: 'book', label: 'Syllabus' },
   { path: '/custom-test', icon: 'test', label: 'Custom Test' },
   { path: '/profile', icon: 'user', label: 'Profile' },
@@ -20,6 +21,7 @@ const ICON_MAP = {
   activity: null,
   bolt: String.fromCodePoint(0x26A1),
   risk: null,
+  resources: null,
   book: String.fromCodePoint(0x1F4DA),
   test: null,
   user: String.fromCodePoint(0x1F464),
@@ -29,9 +31,11 @@ function NavIcon({ type }) {
   if (type === 'chart') return <BarChart2 size={16} />;
   if (type === 'activity') return <Activity size={16} />;
   if (type === 'risk') return <AlertTriangle size={16} />;
+  if (type === 'resources') return <Compass size={16} />;
   if (type === 'test') return <FileText size={16} />;
   return <span>{ICON_MAP[type]}</span>;
 }
+
 
 export default function Sidebar() {
   const { currentUser, logout } = useAuth();

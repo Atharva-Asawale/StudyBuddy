@@ -7,8 +7,8 @@
 
 :root {
   /* Fonts */
-  --font-display:  'Black Ops One', cursive;
-  --font-ui:       'Press Start 2P', cursive;
+  --font-display:  'Orbitron', sans-serif;
+  --font-ui:       'Chakra Petch', sans-serif;
   --font-body:     'Inter', sans-serif;
   --font-mono:     'JetBrains Mono', monospace;
 
@@ -39,11 +39,11 @@
   --glow-purple: 0 0 15px rgba(180,0,255,0.6),   0 0 40px rgba(180,0,255,0.2);
 
   /* Glass Card System */
-  --card-bg:      rgba(10, 10, 20, 0.9);
-  --card-border:  1px solid rgba(255, 45, 120, 0.25);
+  --card-bg:      rgba(22, 22, 33, 0.7); /* translucent greyish glass background */
+  --card-border:  1px solid rgba(255, 255, 255, 0.08); /* subtle white/grey border instead of pink for default cards */
   --card-radius:  16px;
   --card-blur:    blur(20px);
-  --card-shadow:  0 8px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06);
+  --card-shadow:  0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 html, body, #root {

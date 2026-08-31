@@ -5,7 +5,9 @@ import lombok.Data;
 import java.util.UUID;
 
 @Entity
-@Table(name = "concept_dependency_map")
+@Table(name = "concept_dependency_map", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"parent_topic_id", "child_topic_id"})
+})
 @Data
 public class ConceptDependency {
 
